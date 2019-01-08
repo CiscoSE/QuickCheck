@@ -2,13 +2,11 @@
 #Document this file
 
 # Imports
-
 import json
 import cgi
 from http.server import BaseHTTPRequestHandler
 import time
 from http.server import HTTPServer
-#from include.server import Server
 import urllib.request
 import urllib.parse
 import urllib
@@ -22,8 +20,30 @@ bat_signal  = "https://upload.wikimedia.org/wikipedia/en/c/c6/Bat-signal_1989_fi
 bearer = "ZmNmYzUxYWYtMzc2My00NTMzLTg1MzYtYWQxZmQ2M2Q1Nzc5YTAyZWMzNzctNjZj_PF84_1eb65fdf-9643-417f-9974-ad72cae0e10f"
 bot_email = "qc@webex.bot"
 bot_name = "QC"
+qcActions = " "
 
 #Functions
+
+def loadActions():
+    """
+    This method is used for:
+        - reading the file actions.json into an actions object
+        - The actions object contains all the actions our QuickCheck bot
+              can perform.
+    """
+    # read file
+    print(" ")
+    print("Loading actions list from ./include/actions.json file")
+    with open('./include/actions.json', 'r') as myfile:
+        data=myfile.read()
+
+    # parse file
+    qcActions = json.loads(data)
+
+    # show values
+    for x in qcActions["action"]:
+        print ("Action: %s   %s "               % (x["name"].ljust(12), x["description"]))
+    return
 
 def sendSparkGET(url):
     """
@@ -128,8 +148,15 @@ class Server(BaseHTTPRequestHandler):
 
 # Module Functions and Classes
 def main():
+# Read in the actions list from actions.json file
+    loadActions()
+
+# Initialize HTTP server to receive webhooks from Webex Teams and Push
+#   QuickCheck Bot responses back to webex teamsself.
+#   The web service will run until you hit control c to stop it.
     httpd = HTTPServer((HOST_NAME, PORT_NUMBER), Server)
     print(" ")
+    print("Starting local HTTP server")
     print("Use Ctrl-C to stop HTTP server")
     print(time.asctime(), 'Server UP - %s:%s' % (HOST_NAME, PORT_NUMBER))
     try:
