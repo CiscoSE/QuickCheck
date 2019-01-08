@@ -1,0 +1,19 @@
+{ "action": [
+    { "name":"add",
+      "filepath":"add.py",
+      "description":"Add a new endpoint"
+    },
+    { "name":"remove",
+      "filepath":"remove.py",
+      "description":"Remove an existing endpoint"
+    },
+    { "name":"list",
+      "filepath":"list.py",
+      "description":"List existing endpoints"
+    },
+    { "name":"status",
+      "filepath":"status.py",
+      "description":"Get status of endpoints"
+    }
+ ]
+}
