@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 #Document this file
 
-# Imports
+ # Imports
 import json
 import cgi
 from http.server import BaseHTTPRequestHandler
@@ -14,7 +14,6 @@ import urllib
 import os
 import logging
 
-
 # Constants and Variables
 HOST_NAME = 'localhost'
 PORT_NUMBER = 10010
@@ -23,9 +22,10 @@ bearer = "ZmNmYzUxYWYtMzc2My00NTMzLTg1MzYtYWQxZmQ2M2Q1Nzc5YTAyZWMzNzctNjZj_PF84_
 bot_email = "qc@webex.bot"
 bot_name = "QC"
 qcActions = " "
+endpoints = " "
 ngrok_auth_token = "65e18djioFKMQ1sxJ4RWL_4HAuhh76qZVnudrdpo4qs"
 
-#Functions
+# Methods
 def loadActions():
     """
     This method is used for:
@@ -33,6 +33,7 @@ def loadActions():
         - The actions object contains all the actions our QuickCheck bot
               can perform.
     """
+    global qcActions
     # read file
     print(" ")
     print("Loading actions list from ./include/actions.json file")
@@ -45,6 +46,30 @@ def loadActions():
     # show values
     for x in qcActions["action"]:
         print ("Action: %s   %s "               % (x["name"].ljust(12), x["description"]))
+    return
+
+def loadEndpoints():
+    """
+    This method reads the ./include/endpoints.json file into the loadEndpoints
+      variable.  These are the endpoints that will be acted on whenever a
+      the QuickCheck bot invokes an action.
+    """
+    global endpoints
+    # read file
+    print(" ")
+    print("Loading endpoints list from ./include/endpoints.json file")
+    with open('./include/endpoints.json', 'r') as myfile:
+        data=myfile.read()
+
+    # parse file
+    endpoints = json.loads(data)
+
+    # show values
+    for x in endpoints["endpoint"]:
+        print ("Name          : "+x["name"])
+        print ("Location      : "+x["location"])
+        print ("IP v4 Address : "+x["ipv4addr"])
+        print ("Type          : "+x["type"])
     return
 
 def checkNgrok():
@@ -180,18 +205,23 @@ class Server(BaseHTTPRequestHandler):
         # read the message and convert it into a python dictionary
         length = int(self.headers.get('content-length'))
         webhook = json.loads(self.rfile.read(length))
-
-        print ("This is the received data from post",webhook)
-        print (webhook['data']['id'])
+        #print (webhook['data']['id'])
         result = sendSparkGET('https://api.ciscospark.com/v1/messages/{0}'.format(webhook['data']['id']))
         result = json.loads(result)
+        if "text" in result:
+            print (time.asctime(),"   TXT received via Post from webhook <- ",result["text"])
+        if "files" in result:
+            print (time.asctime(),"   FileID received via Post from hook <- ",result["files"])
+        print (time.asctime(),"      Received from email address     <- ",result["personEmail"])
+        print (time.asctime(),"      Received from teams space id    <- ",result["roomId"])
+
+
         msg = None
         if webhook['data']['personEmail'] != bot_email:
             in_message = result.get('text', '').lower()
             in_message = in_message.replace(bot_name, '')
             if 'batman' in in_message or "whoareyou" in in_message:
                 msg = "I'm Batman!"
-                print(msg)
             elif 'batcave' in in_message:
                 message = result.get('text').split('batcave')[1].strip(" ")
                 if len(message) > 0:
@@ -199,11 +229,22 @@ class Server(BaseHTTPRequestHandler):
                 else:
                     msg = "The Batcave is silent..."
             elif 'batsignal' in in_message:
-                    print ("NANA NANA NANA NANA")
-                    sendSparkPOST("https://api.ciscospark.com/v1/messages", {"roomId": webhook['data']['roomId'], "files": bat_signal})
-                    if msg != None:
-                        print (msg)
-            sendSparkPOST("https://api.ciscospark.com/v1/messages", {"roomId": webhook['data']['roomId'], "text": msg})
+                    msg = "NANA NANA NANA NANA"
+                    result = sendSparkPOST("https://api.ciscospark.com/v1/messages", {"roomId": webhook['data']['roomId'], "files": bat_signal})
+                    result = json.loads(result)
+                    if "text" in result:
+                        print (time.asctime(),"   POSTing Txt to webex               -> ",result["text"])
+                    if "files" in result:
+                        print (time.asctime(),"   POSTing this file to webex         -> ",result["files"])
+                    print (time.asctime(),"      POSTing to this email           -> ",result["personEmail"])
+                    print (time.asctime(),"      POSTing to teams space id       -> ",result["roomId"])
+
+            else:
+                msg = "I\'m sorry Dave, I don\'t know what you\'re talking about."
+            if msg != None:
+                    print (time.asctime(),"   POSTing msg to Webex Teams         ->  "+msg)
+                    print (time.asctime(),"      POSTing to teams space id       ->  "+webhook['data']['roomId'])
+                    sendSparkPOST("https://api.ciscospark.com/v1/messages", {"roomId": webhook['data']['roomId'], "text": msg})
             return "true"
 
 
@@ -217,25 +258,26 @@ class Server(BaseHTTPRequestHandler):
         content = self.handle_http(200, "text/html")
         self.wfile.write(content)
 
-# Module Functions and Classes
 def main():
-# Turn on logging
+ # Turn on logging
     logger = logging.getLogger(__name__)
-# Check on ngrok tunnels
+ # Check on ngrok tunnels
     checkNgrok()
-# Check on Webex Teams webhook
+ # Check on Webex Teams webhook
     checkWebhook()
-# Read in the actions list from actions.json file
+ # Read in the actions list from actions.json file
     loadActions()
+ # Read in the endpoints list from endpoints.json files
+    loadEndpoints()
 
-# Initialize HTTP server to receive webhooks from Webex Teams and Push
-#   QuickCheck Bot responses back to webex teamsself.
-#   The web service will run until you hit control c to stop it.
+ # Initialize HTTP server to receive webhooks from Webex Teams and Push
+ #   QuickCheck Bot responses back to webex teamsself.
+ #   The web service will run until you hit control c to stop it.
     httpd = HTTPServer((HOST_NAME, PORT_NUMBER), Server)
     print(" ")
     print("Starting local HTTP server")
     print("Use Ctrl-C to stop HTTP server")
-    print(time.asctime(), 'Server UP - %s:%s' % (HOST_NAME, PORT_NUMBER))
+    print(time.asctime(), '   Server UP - %s:%s' % (HOST_NAME, PORT_NUMBER))
     try:
         httpd.serve_forever()
     except KeyboardInterrupt:
@@ -244,6 +286,6 @@ def main():
     httpd.server_close()
     print(time.asctime(), 'Server DOWN - %s:%s' % (HOST_NAME, PORT_NUMBER))
 
-# Check to see if this file is the "__main__" script being executed
+ # Check to see if this file is the "__main__" script being executed
 if __name__ == '__main__':
     main()
