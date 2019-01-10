@@ -7,10 +7,12 @@ import cgi
 from http.server import BaseHTTPRequestHandler
 import time
 from http.server import HTTPServer
+import http.client
 import urllib.request
 import urllib.parse
 import urllib
-
+import os
+import logging
 
 
 # Constants and Variables
@@ -21,9 +23,9 @@ bearer = "ZmNmYzUxYWYtMzc2My00NTMzLTg1MzYtYWQxZmQ2M2Q1Nzc5YTAyZWMzNzctNjZj_PF84_
 bot_email = "qc@webex.bot"
 bot_name = "QC"
 qcActions = " "
+ngrok_auth_token = "65e18djioFKMQ1sxJ4RWL_4HAuhh76qZVnudrdpo4qs"
 
 #Functions
-
 def loadActions():
     """
     This method is used for:
@@ -43,6 +45,75 @@ def loadActions():
     # show values
     for x in qcActions["action"]:
         print ("Action: %s   %s "               % (x["name"].ljust(12), x["description"]))
+    return
+
+def checkNgrok():
+    """
+    This module checks to see that ngrok is running on the localhost
+    and a tunnel is configured to reach public url.
+    """
+    # Checking for local http server on 4040 which is standard ngrok service
+    print(" ")
+    print("Checking ngrok to see if ngroc tunnel is active.")
+    print("Current active ngrok tunnels running on laptop are:")
+    conn = http.client.HTTPConnection("localhost:4040")
+    payload = ""
+    headers = { 'cache-control': "no-cache" }
+    conn.request("GET", "/api/tunnels", payload, headers)
+    res = conn.getresponse()
+    data = json.loads(res.read())
+    for x in data["tunnels"]:
+        print("ngrok public_url     : "+x["public_url"])
+        print("ngrok tunnel on port : "+x["config"]["addr"])
+        #print(data.decode("utf-8"))
+    return
+
+def checkWebhook():
+    """
+    This module checks to see if a webhook is already in place with webex
+    teams to send chat traffic from qc.webex.bot to the http server in this
+    main.py program.  The webhook actually points to a public address hosted
+    by ngrok which tunnels the traffic to the local http server.
+    """
+    print(" ")
+    print("Checking Webex Teams to see if webhook for qc.webex.bot is enabled")
+    conn = http.client.HTTPSConnection("api.ciscospark.com")
+    payload = ""
+    headers = {
+        'Authorization': "Bearer "+bearer,
+        'cache-control': "no-cache"
+        }
+    conn.request("GET", "/v1/webhooks", payload, headers)
+    res = conn.getresponse()
+    data = json.loads(res.read())
+
+    for x in data["items"]:
+        print("Webex Teams Webhook Name: "+x["name"])
+        print("The Webex Teams Webhook Target URL is : "+x["targetUrl"])
+        print("Webhook ID: "+x["id"])
+    current_tunnel = data["items"][0]["targetUrl"]
+    webhookId = data["items"][0]["id"]
+    # print(data["items"][0])
+    print(" ")
+
+
+    print("Updating webex teams Webhook target url with current ngrok tunnel")
+    conn = http.client.HTTPSConnection("api.ciscospark.com")
+    payload = json.dumps({"name":"QC Webhook","targetUrl":current_tunnel})
+    headers = {
+    'Authorization': "Bearer "+bearer,
+    'Content-Type': "application/json",
+    'cache-control': "no-cache"
+    }
+    conn.request("PUT", "/v1/webhooks/"+webhookId, payload, headers)
+
+    res = conn.getresponse()
+    data = json.loads(res.read())
+
+    print("Webex Teams Webhook updated:")
+    print("Webhook name       : "+data["name"])
+    print("Webhook Target URL : "+data["targetUrl"])
+
     return
 
 def sendSparkGET(url):
@@ -71,19 +142,19 @@ def sendSparkPOST(url, data):
     contents = urllib.request.urlopen(therequest).read()
     return contents
 
-'''
- When a request comes in, the BaseHTTPRequestHandler will automatically route
-  the request to the appropriate request method (either do_GET, do_HEAD or
-  do_POST) which we’ve defined on our subclass
- We’ll use handle_http to send our basic http handlers and then return the content.
- - respond will be in charge of sending the actual response out
-
- The flow of data will look like this when a request is received:
-   do_* receives request > respond invoked > handle_http bootstraps request,
-   returns content > respond sends the response
-'''
-
 class Server(BaseHTTPRequestHandler):
+    '''
+    When a request comes in, the BaseHTTPRequestHandler will automatically route
+    the request to the appropriate request method (either do_GET, do_HEAD or
+    do_POST) which we’ve defined on our subclass
+    We’ll use handle_http to send our basic http handlers and then return the content.
+        - respond will be in charge of sending the actual response out
+
+    The flow of data will look like this when a request is received:
+    do_* receives request > respond invoked > handle_http bootstraps request,
+    returns content > respond sends the response
+    '''
+
     def _set_headers(self):
         self.send_response(200)
         self.send_header('Content-type', 'application/json')
@@ -148,6 +219,12 @@ class Server(BaseHTTPRequestHandler):
 
 # Module Functions and Classes
 def main():
+# Turn on logging
+    logger = logging.getLogger(__name__)
+# Check on ngrok tunnels
+    checkNgrok()
+# Check on Webex Teams webhook
+    checkWebhook()
 # Read in the actions list from actions.json file
     loadActions()
 
