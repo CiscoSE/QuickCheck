@@ -13,6 +13,12 @@ import urllib.parse
 import urllib
 import os
 import logging
+import ssl
+import requests
+import xmltodict
+from lxml import etree
+from requests.packages.urllib3.exceptions import InsecureRequestWarning
+
 
 # Constants and Variables
 HOST_NAME = 'localhost'
@@ -21,31 +27,254 @@ bat_signal  = "https://upload.wikimedia.org/wikipedia/en/c/c6/Bat-signal_1989_fi
 bearer = "ZmNmYzUxYWYtMzc2My00NTMzLTg1MzYtYWQxZmQ2M2Q1Nzc5YTAyZWMzNzctNjZj_PF84_1eb65fdf-9643-417f-9974-ad72cae0e10f"
 bot_email = "qc@webex.bot"
 bot_name = "QC"
-qcActions = " "
-endpoints = " "
 ngrok_auth_token = "65e18djioFKMQ1sxJ4RWL_4HAuhh76qZVnudrdpo4qs"
+ngrok_tunnel = " "
+ngrok_port = " "
+endpoints = " "
+
 
 # Methods
-def loadActions():
-    """
-    This method is used for:
-        - reading the file actions.json into an actions object
-        - The actions object contains all the actions our QuickCheck bot
-              can perform.
-    """
-    global qcActions
-    # read file
-    print(" ")
-    print("Loading actions list from ./include/actions.json file")
-    with open('./include/actions.json', 'r') as myfile:
-        data=myfile.read()
 
-    # parse file
-    qcActions = json.loads(data)
 
-    # show values
-    for x in qcActions["action"]:
-        print ("Action: %s   %s "               % (x["name"].ljust(12), x["description"]))
+def getCodecXML(addr,user,passwd,msg):
+    """
+    This method used to send (GET) messages - xAPI commands and requests to Cisco CE
+    based codecs.
+    """
+    url = msg
+    codec_username = user
+    codec_password = passwd
+    url = msg
+    host = addr
+
+    # NOT checking certificates for https traffic
+    requests.packages.urllib3.disable_warnings(InsecureRequestWarning)
+
+
+    try:
+        response = requests.get(url, verify=False, timeout=2, auth=(codec_username, codec_password))
+        xmlstr = response.content
+        root = etree.fromstring(xmlstr)
+        return root
+
+    except:
+        msg = (time.asctime()+" -  Can't reach host "+host)
+        print(msg)
+
+    return
+
+def postCodecXML(host,user,passwd,url,payload,headers):
+    """
+    This method used to POST messages - xAPI commands and requests to Cisco CE
+    based codecs.
+    """
+    codec_username = user
+    codec_password = passwd
+    url = url
+    host = host
+    payload = payload
+    headers = headers
+
+    # NOT checking certificates for https traffic
+    try:
+        requests.packages.urllib3.disable_warnings(InsecureRequestWarning)
+        response = requests.post(url, data=payload, verify=False, timeout=2, headers=headers, auth=(codec_username, codec_password))
+        #print ("response String : "+response.text)
+        xmlstr = response.text
+        root = etree.fromstring(xmlstr)
+        return root
+    except:
+        msg = (time.asctime()+" -  Can't reach host "+host)
+        print(msg)
+
+    return
+
+def intent(object, webhook):
+    """
+    This method is called by the local http server whenever an action is sent
+    by the webex teams webhook - and performs appropriate operation on the
+    Endpoints
+    """
+    intent = object
+
+
+    print(time.asctime(),'   Intent received is ',intent)
+
+    for x in endpoints["endpoint"]:
+        host = x["ipv4addr"]
+        codec_username = x["admin"]
+        codec_password = x["password"]
+        hostname = x["name"]
+        hostLocation = x["location"]
+
+        if intent == "status":
+
+            url = 'https://{}/getxml?location=/Status/Standby'.format(host)
+
+            #try:
+            response = getCodecXML(host,codec_username,codec_password,url).xpath('//Status/Standby/State/text()')[0]
+            msg = msg = (time.asctime()+" - Standby status of "+hostname+" at "+hostLocation+" is: "+response)
+            print(msg)
+            #except:
+                #msg = (time.asctime()+" -  Can't reach host "+host)
+
+        elif intent == "getDiags":
+            diags=""
+            url = 'https://{}/getxml?location=/Status/Diagnostics'.format(host)
+            #try:
+            response = getCodecXML(host,codec_username,codec_password,url)
+            tablecont = response.xpath('//Status/Diagnostics/Message/Description/text()')
+            tablelen = len(tablecont)
+            for x in range(0,tablelen):
+                x = int(x)
+                diags = diags+("\n\t"+response.xpath('//Status/Diagnostics/Message/Description/text()')[x])
+
+            msg = (time.asctime()+" - Diagnostic Messages "+hostname+" at "+hostLocation+" are:\n\t"+diags)
+
+            print(msg)
+            #except:
+                #msg = (time.asctime()+" -  Can't reach host "+host)
+
+        elif intent == "sipStatus":
+
+            url = 'https://{}/getxml?location=/Status/SIP/Registration'.format(host)
+            #try:
+            response = requests.get(url, verify=False, timeout=2, auth=(codec_username, codec_password))
+            xmlstr = response.content
+            root = etree.fromstring(xmlstr)
+            print(etree.tostring(root, encoding="UTF-8"))
+            status = root.xpath('//Status/SIP/Registration/Status/text()')[0]
+            msg = ("Host Sip Registration Status is: "+status)
+            print(time.asctime(),"      Received SIP Registration Stat  <- ",status)
+            print (time.asctime(),"      POSTing msg to Webex Teams      ->  "+status)
+            print (time.asctime(),"      POSTing to teams space id       ->  "+webhook['data']['roomId'])
+            sendSparkPOST("https://api.ciscospark.com/v1/messages", {"roomId": webhook['data']['roomId'], "text": msg})
+            #except:
+            #    msg = (time.asctime()+" -  Can't reach host "+hostname+" "+hostLocation+" at "+host)
+            #    print(msg)
+            #    sendSparkPOST("https://api.ciscospark.com/v1/messages", {"roomId": webhook['data']['roomId'], "text": msg})
+
+        elif intent == "getLoss":
+            url = 'https://{}/getxml?location=/Status/MediaChannels'.format(host)
+            video = "No"
+            audio = "No"
+            try:
+                response = requests.get(url, verify=False, timeout=2, auth=(codec_username, codec_password))
+                xml_dict = xmltodict.parse(response.content)
+            except:
+                video = "N/A"
+                audio = "N/A"
+                return video, audio
+            try:
+                check = xml_dict["Status"]["MediaChannels"]
+                if check != "None":
+                    channels = xml_dict["Status"]["MediaChannels"]["Call"]["Channel"]
+                    for channel in channels:
+                        if "Video" in channel.keys() and channel["Video"]["ChannelRole"] == "Main":
+                            direction = channel["Direction"]
+                            if direction == "Incoming":
+                                lossin = float(channel["Netstat"]["Loss"])
+                                pksin = float(channel["Netstat"]["Packets"])
+
+                                if lossin == 0:
+                                    totalin = 0
+                                else:
+                                    totalin = (lossin/pksin)* 100
+                                if (totalin > 5):
+                                    video = "Yes"
+                            else:
+                                lossout = float(channel["Netstat"]["Loss"])
+                                pksout = float(channel["Netstat"]["Packets"])
+
+                                if lossout == 0:
+                                    totalout = 0
+                                else:
+                                    totalout = (lossout / pksout) * 100
+                                if (totalout > 5):
+                                    video = "Yes"
+                else:
+                    video = "N/A"
+            except:
+                video = "N/A"
+            try:
+                check = xml_dict["Status"]["MediaChannels"]
+                if check != "None":
+                    channels = xml_dict["Status"]["MediaChannels"]["Call"]["Channel"]
+                    for channel in channels:
+                        if "Audio" in channel.keys() and channel["Type"] == "Audio":
+                            direction = channel["Direction"]
+                            if direction == "Incoming":
+                                lossin = float(channel["Netstat"]["Loss"])
+                                pksin = float(channel["Netstat"]["Packets"])
+
+                                if lossin == 0:
+                                    totalin = 0
+                                else:
+                                    totalin = (lossin/pksin)* 100
+                                if (totalin > 5):
+                                    audio = "Yes"
+                            else:
+                                lossout = float(channel["Netstat"]["Loss"])
+                                pksout = float(channel["Netstat"]["Packets"])
+                                if lossout == 0:                                        totalout = 0
+                                else:
+                                    totalout = (lossout/pksout)* 100
+                                if (totalout > 5):
+                                    audio = "Yes"
+                else:
+                    audio = "N/A"
+            except:
+                audio = "N/A"
+            print(video,"   ",audio)
+
+        elif intent == "getLast":
+            """
+            getLast gives stats on last call
+
+            """
+
+            url = 'https://{}/putxml'.format(host)
+            payload = '<Command><CallHistory><Recents><DetailLevel>Full</DetailLevel><Limit>1</Limit></Recents></CallHistory></Command>'
+            headers = {'Content-Type': 'text/xml'}
+
+            try:
+                root = postCodecXML(host,codec_username,codec_password,url,payload,headers)
+                infoXML = root.xpath('//Command/CallHistoryRecentsResult/Entry/RemoteNumber')[0]
+                RemoteNumber = infoXML.text
+                infoXML = root.xpath('//Command/CallHistoryRecentsResult/Entry/DisplayName')[0]
+                DisplayName = infoXML.text
+                infoXML = root.xpath('//Command/CallHistoryRecentsResult/Entry/Direction')[0]
+                Direction = infoXML.text
+                infoXML = root.xpath('//Command/CallHistoryRecentsResult/Entry/Protocol')[0]
+                Protocol = infoXML.text
+                infoXML = root.xpath('//Command/CallHistoryRecentsResult/Entry/CallType')[0]
+                CallType = infoXML.text
+                infoXML = root.xpath('//Command/CallHistoryRecentsResult/Entry/LastOccurrenceDuration')[0]
+                Seconds = infoXML.text
+                infoXML = root.xpath('//Command/CallHistoryRecentsResult/Entry/LastOccurrenceRequestedCallType')[0]
+                ReqCallType = infoXML.text
+                infoXML = root.xpath('//Command/CallHistoryRecentsResult/Entry/LastOccurrenceStartTime')[0]
+                StartTime = infoXML.text
+                infoXML = root.xpath('//Command/CallHistoryRecentsResult/Entry/LastOccurrenceEndTime')[0]
+                EndTime = infoXML.text
+                infoXML = root.xpath('//Command/CallHistoryRecentsResult/Entry/LastOccurrenceEndTime')[0]
+
+                msg = "Last Call Host: {}\n\tRemote#: {}\n\tRemoteName: {}\n\tDirection: {}\n\tProtocol: {}\n\tCallType: {}\n\tSeconds: {}\n\tRequestedType: {}\n\tStart: {}\n\tEnd: {} ".format(host ,RemoteNumber,DisplayName,Direction,Protocol,CallType,Seconds,ReqCallType,StartTime,EndTime)
+
+            except:
+                msg = "Failed getting Last Call Info"
+                print (msg)
+
+        else:
+            msg = "I don't know that action"
+            print(msg)
+
+        print (time.asctime(),"      POSTing msg to Webex Teams      ->  "+msg)
+        print (time.asctime(),"      POSTing to teams space id       ->  "+webhook['data']['roomId'])
+        try:
+            sendSparkPOST("https://api.ciscospark.com/v1/messages", {"roomId": webhook['data']['roomId'], "text": msg})
+        except:
+            print (time.asctime(),"      Failed sending to Webex   ->  ")
     return
 
 def loadEndpoints():
@@ -77,6 +306,8 @@ def checkNgrok():
     This module checks to see that ngrok is running on the localhost
     and a tunnel is configured to reach public url.
     """
+    global ngrok_tunnel
+
     # Checking for local http server on 4040 which is standard ngrok service
     print(" ")
     print("Checking ngrok to see if ngroc tunnel is active.")
@@ -90,7 +321,8 @@ def checkNgrok():
     for x in data["tunnels"]:
         print("ngrok public_url     : "+x["public_url"])
         print("ngrok tunnel on port : "+x["config"]["addr"])
-        #print(data.decode("utf-8"))
+    ngrok_port = data["tunnels"][0]["config"]["addr"]
+    ngrok_tunnel = data["tunnels"][0]["public_url"]
     return
 
 def checkWebhook():
@@ -100,6 +332,7 @@ def checkWebhook():
     main.py program.  The webhook actually points to a public address hosted
     by ngrok which tunnels the traffic to the local http server.
     """
+
     print(" ")
     print("Checking Webex Teams to see if webhook for qc.webex.bot is enabled")
     conn = http.client.HTTPSConnection("api.ciscospark.com")
@@ -124,21 +357,23 @@ def checkWebhook():
 
     print("Updating webex teams Webhook target url with current ngrok tunnel")
     conn = http.client.HTTPSConnection("api.ciscospark.com")
-    payload = json.dumps({"name":"QC Webhook","targetUrl":current_tunnel})
+    payload = json.dumps({"name":"QC Webhook","targetUrl":ngrok_tunnel})
     headers = {
     'Authorization': "Bearer "+bearer,
     'Content-Type': "application/json",
     'cache-control': "no-cache"
     }
-    conn.request("PUT", "/v1/webhooks/"+webhookId, payload, headers)
+    try:
+        conn.request("PUT", "/v1/webhooks/"+webhookId, payload, headers)
 
-    res = conn.getresponse()
-    data = json.loads(res.read())
+        res = conn.getresponse()
+        data = json.loads(res.read())
 
-    print("Webex Teams Webhook updated:")
-    print("Webhook name       : "+data["name"])
-    print("Webhook Target URL : "+data["targetUrl"])
-
+        print("Webex Teams Webhook updated:")
+        print("Webhook name       : "+data["name"])
+        print("Webhook Target URL : "+data["targetUrl"])
+    except:
+        print("Couldn't PUT to set webhook")
     return
 
 def sendSparkGET(url):
@@ -215,11 +450,16 @@ class Server(BaseHTTPRequestHandler):
         print (time.asctime(),"      Received from email address     <- ",result["personEmail"])
         print (time.asctime(),"      Received from teams space id    <- ",result["roomId"])
 
-
         msg = None
         if webhook['data']['personEmail'] != bot_email:
-            in_message = result.get('text', '').lower()
-            in_message = in_message.replace(bot_name, '')
+            #in_message = result.get('text', '').lower()
+            in_message = result.get('text', '')
+            #in_message = in_message.replace(bot_name, '')
+            # first word in message is the action
+            x = in_message.split(" ", 1)
+            x = x[1]
+            intent(x, webhook)
+            """
             if 'batman' in in_message or "whoareyou" in in_message:
                 msg = "I'm Batman!"
             elif 'batcave' in in_message:
@@ -245,6 +485,7 @@ class Server(BaseHTTPRequestHandler):
                     print (time.asctime(),"   POSTing msg to Webex Teams         ->  "+msg)
                     print (time.asctime(),"      POSTing to teams space id       ->  "+webhook['data']['roomId'])
                     sendSparkPOST("https://api.ciscospark.com/v1/messages", {"roomId": webhook['data']['roomId'], "text": msg})
+            """
             return "true"
 
 
@@ -265,8 +506,7 @@ def main():
     checkNgrok()
  # Check on Webex Teams webhook
     checkWebhook()
- # Read in the actions list from actions.json file
-    loadActions()
+
  # Read in the endpoints list from endpoints.json files
     loadEndpoints()
 
