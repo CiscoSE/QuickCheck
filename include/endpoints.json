@@ -1,0 +1,10 @@
+{"endpoint":[
+  { "name":"Cisco Berry Farms",
+    "location":"Kellers DX70 on webex sandbox at home office",
+    "ipv4addr":"192.168.16.123",
+    "type":"DX70",
+    "admin":"kelmcbri",
+    "password":"C1sc0123"
+  }
+ ]
+}
