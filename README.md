@@ -2,7 +2,7 @@
 Quick way to check various settings on multiple Cisco Telepresence Codecs running CE code.
 
 
-Pre-Requisites
+Pre-Requisites for QuickCheck
   - Create a webex teams bot - I created QC@webex.bot
       How to create a webex teams bot (using python):
   https://developer.webex.com/blog/spark-bot-demo
