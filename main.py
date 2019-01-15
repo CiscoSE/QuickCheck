@@ -35,7 +35,6 @@ endpoints = " "
 
 # Methods
 
-
 def getCodecXML(addr,user,passwd,msg):
     """
     This method used to send (GET) messages - xAPI commands and requests to Cisco CE
@@ -118,6 +117,13 @@ def intent(object, webhook):
                   "sipStatus - List SIP registration Status.\n" \
                   "getLoss - List Packet Loss values.\n" \
                   "getLast - List Last Call Details.\n"
+            print (time.asctime(),"      POSTing msg to Webex Teams      ->  "+msg)
+            print (time.asctime(),"      POSTing to teams space id       ->  "+webhook['data']['roomId'])
+            try:
+                sendSparkPOST("https://api.ciscospark.com/v1/messages", {"roomId": webhook['data']['roomId'], "text": msg})
+            except:
+                print (time.asctime(),"      Failed sending to Webex   ->  ")
+            return
 
         elif intent == "getStatus":
 
@@ -140,10 +146,10 @@ def intent(object, webhook):
                 for x in range(0,tablelen):
                     x = int(x)
                     diags = diags+("\n\t"+response.xpath('//Status/Diagnostics/Message/Description/text()')[x])
-                    msg = (time.asctime()+" - Diagnostic Messages "+hostname+" at "+hostLocation+" are:\n\t"+diags)
+                    msg = (time.asctime()+" - Diagnostic Messages "+hostname+" at "+hostLocation+" are:"+diags)
                     print(msg)
             except:
-                msg = (time.asctime()+" -  Can't reach host "+host)
+                msg = ("\n"+time.asctime()+" -  Can't reach host "+host)
 
         elif intent == "getVersion":
 
@@ -281,7 +287,7 @@ def intent(object, webhook):
                 EndTime = infoXML.text
                 infoXML = root.xpath('//Command/CallHistoryRecentsResult/Entry/LastOccurrenceEndTime')[0]
 
-                msg = "Last Call Host: {}\n\tRemote#: {}\n\tRemoteName: {}\n\tDirection: {}\n\tProtocol: {}\n\tCallType: {}\n\tSeconds: {}\n\tRequestedType: {}\n\tStart: {}\n\tEnd: {} ".format(host ,RemoteNumber,DisplayName,Direction,Protocol,CallType,Seconds,ReqCallType,StartTime,EndTime)
+                msg = "Last Call Hostname: {}\n\t Host: {}\n\tRemote#: {}\n\tRemoteName: {}\n\tDirection: {}\n\tProtocol: {}\n\tCallType: {}\n\tSeconds: {}\n\tRequestedType: {}\n\tStart: {}\n\tEnd: {} ".format(hostname, host ,RemoteNumber,DisplayName,Direction,Protocol,CallType,Seconds,ReqCallType,StartTime,EndTime)
 
             except:
                 msg = "Failed getting Last Call Info"
@@ -436,7 +442,6 @@ class Server(BaseHTTPRequestHandler):
     do_* receives request > respond invoked > handle_http bootstraps request,
     returns content > respond sends the response
     '''
-
     def _set_headers(self):
         self.send_response(200)
         self.send_header('Content-type', 'application/json')
@@ -445,8 +450,8 @@ class Server(BaseHTTPRequestHandler):
     def do_HEAD(self):
         self._set_headers()
 
-    # GET sends back a Hello world message
     def do_GET(self):
+        # GET sends back a Hello world message
         self._set_headers()
         self.wfile.write(bytes(json.dumps({'Response': 'A Msg to you', 'Details': 'You sent a GET not a Post'}),"utf8"))
 
@@ -481,33 +486,6 @@ class Server(BaseHTTPRequestHandler):
             x = in_message.split(" ", 1)
             x = x[1]
             intent(x, webhook)
-            """
-            if 'batman' in in_message or "whoareyou" in in_message:
-                msg = "I'm Batman!"
-            elif 'batcave' in in_message:
-                message = result.get('text').split('batcave')[1].strip(" ")
-                if len(message) > 0:
-                    msg = "The Batcave echoes, '{0}'".format(message)
-                else:
-                    msg = "The Batcave is silent..."
-            elif 'batsignal' in in_message:
-                    msg = "NANA NANA NANA NANA"
-                    result = sendSparkPOST("https://api.ciscospark.com/v1/messages", {"roomId": webhook['data']['roomId'], "files": bat_signal})
-                    result = json.loads(result)
-                    if "text" in result:
-                        print (time.asctime(),"   POSTing Txt to webex               -> ",result["text"])
-                    if "files" in result:
-                        print (time.asctime(),"   POSTing this file to webex         -> ",result["files"])
-                    print (time.asctime(),"      POSTing to this email           -> ",result["personEmail"])
-                    print (time.asctime(),"      POSTing to teams space id       -> ",result["roomId"])
-
-            else:
-                msg = "I\'m sorry Dave, I don\'t know what you\'re talking about."
-            if msg != None:
-                    print (time.asctime(),"   POSTing msg to Webex Teams         ->  "+msg)
-                    print (time.asctime(),"      POSTing to teams space id       ->  "+webhook['data']['roomId'])
-                    sendSparkPOST("https://api.ciscospark.com/v1/messages", {"roomId": webhook['data']['roomId'], "text": msg})
-            """
             return "true"
 
 
