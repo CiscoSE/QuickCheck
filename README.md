@@ -11,7 +11,7 @@ Pre-Requisites for QuickCheck
     HowTo:
   - Get an account on ngrok which gives you a tunnel from ngrok to your laptop and a public address at ngrok for your webhook to send http messages to.  *** ngrok is sometimes considered a security risk by corporate security services, so check with IT before loading ngrok client on your laptop.
     - Launch ngrok client on laptop
-
+- Edit endpoints.json file to include endpoints you want to manage.
 - Run main.py from terminal on laptop
     main.py will
       - launch local HTTP server on port 10010

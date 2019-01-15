@@ -107,33 +107,55 @@ def intent(object, webhook):
         hostname = x["name"]
         hostLocation = x["location"]
 
-        if intent == "status":
+        if intent == "help":
+            msg = "Welcome to QuickCheck\n" \
+                  "\n" \
+                  "Here are the actions supported by QuickCheck:\n" \
+                  "help - This help menu\n" \
+                  "getStatus - Currently provides Standby Status.\n" \
+                  "getDiags - List any diagnostic alerts. \n" \
+                  "getVersion - List current software version.\n" \
+                  "sipStatus - List SIP registration Status.\n" \
+                  "getLoss - List Packet Loss values.\n" \
+                  "getLast - List Last Call Details.\n"
+
+        elif intent == "getStatus":
 
             url = 'https://{}/getxml?location=/Status/Standby'.format(host)
 
-            #try:
-            response = getCodecXML(host,codec_username,codec_password,url).xpath('//Status/Standby/State/text()')[0]
-            msg = msg = (time.asctime()+" - Standby status of "+hostname+" at "+hostLocation+" is: "+response)
-            print(msg)
-            #except:
-                #msg = (time.asctime()+" -  Can't reach host "+host)
+            try:
+                response = getCodecXML(host,codec_username,codec_password,url).xpath('//Status/Standby/State/text()')[0]
+                msg = (time.asctime()+" - Standby status of "+hostname+" at "+hostLocation+" is: "+response)
+                print(msg)
+            except:
+                msg = (time.asctime()+" -  Can't reach host "+host)
 
         elif intent == "getDiags":
             diags=""
             url = 'https://{}/getxml?location=/Status/Diagnostics'.format(host)
+            try:
+                response = getCodecXML(host,codec_username,codec_password,url)
+                tablecont = response.xpath('//Status/Diagnostics/Message/Description/text()')
+                tablelen = len(tablecont)
+                for x in range(0,tablelen):
+                    x = int(x)
+                    diags = diags+("\n\t"+response.xpath('//Status/Diagnostics/Message/Description/text()')[x])
+                    msg = (time.asctime()+" - Diagnostic Messages "+hostname+" at "+hostLocation+" are:\n\t"+diags)
+                    print(msg)
+            except:
+                msg = (time.asctime()+" -  Can't reach host "+host)
+
+        elif intent == "getVersion":
+
+            url = 'https://{}/getxml?location=/Status/Provisioning/Software/Current'.format(host)
+
             #try:
-            response = getCodecXML(host,codec_username,codec_password,url)
-            tablecont = response.xpath('//Status/Diagnostics/Message/Description/text()')
-            tablelen = len(tablecont)
-            for x in range(0,tablelen):
-                x = int(x)
-                diags = diags+("\n\t"+response.xpath('//Status/Diagnostics/Message/Description/text()')[x])
-
-            msg = (time.asctime()+" - Diagnostic Messages "+hostname+" at "+hostLocation+" are:\n\t"+diags)
-
+            response = getCodecXML(host,codec_username,codec_password,url).xpath('//Status/Provisioning/Software/Current/VersionId/text()')[0]
+            msg = (time.asctime()+" - CE Version running on "+hostname+" at "+hostLocation+" is:\n\t "+response)
             print(msg)
             #except:
                 #msg = (time.asctime()+" -  Can't reach host "+host)
+
 
         elif intent == "sipStatus":
 
