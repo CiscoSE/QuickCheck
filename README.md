@@ -34,14 +34,14 @@ MX800 Test at Kellers MX800 on webex sandbox at home office is:
 ## Features
 
 Here are the actions supported by QuickCheck:
-  **help**       - This help menu
-  **list**       - Print endpoints from [endpoints.json](.include/endpoints.json) list.
-  **getStatus**  - Provides Standby Status.
-  **getDiags**   - List any diagnostic alerts.
-  **getVersion** - List current software version.
-  **sipStatus**  - List SIP registration Status.
-  **getLoss**    - List Packet Loss values.
-  **getLast**    - List Last Call Details.
+  **help**       - This help menu\n
+  **list**       - Print endpoints from [endpoints.json](./include/endpoints.json) list.\n
+  **getStatus**  - Provides Standby Status.\n
+  **getDiags**   - List any diagnostic alerts.\n
+  **getVersion** - List current software version.\n
+  **sipStatus**  - List SIP registration Status.\n
+  **getLoss**    - List Packet Loss values.\n
+  **getLast**    - List Last Call Details.\n
 
 ## Technologies & Frameworks Used
 
