@@ -111,6 +111,7 @@ def intent(object, webhook):
                   "\n" \
                   "Here are the actions supported by QuickCheck:\n" \
                   "help - This help menu\n" \
+                  "list - print endpoints from endpoints.json list.\n" \
                   "getStatus - Currently provides Standby Status.\n" \
                   "getDiags - List any diagnostic alerts. \n" \
                   "getVersion - List current software version.\n" \
@@ -134,7 +135,11 @@ def intent(object, webhook):
                 msg = (time.asctime()+" - Standby status of "+hostname+" at "+hostLocation+" is: "+response)
                 print(msg)
             except:
-                msg = (time.asctime()+" -  Can't reach host "+host)
+                msg = (time.asctime()+" -  Can't reach "+hostname+" at addr: "+host)
+
+        elif intent == "list":
+            msg = (time.asctime()+"\t"+hostname+" address: "+host+" Location: "+hostLocation+"\n")
+
 
         elif intent == "getDiags":
             diags=""
@@ -149,18 +154,18 @@ def intent(object, webhook):
                     msg = (time.asctime()+" - Diagnostic Messages "+hostname+" at "+hostLocation+" are:"+diags)
                     print(msg)
             except:
-                msg = ("\n"+time.asctime()+" -  Can't reach host "+host)
+                msg = (time.asctime()+" -  Can't reach "+hostname+" at addr: "+host)
 
         elif intent == "getVersion":
 
             url = 'https://{}/getxml?location=/Status/Provisioning/Software/Current'.format(host)
 
-            #try:
-            response = getCodecXML(host,codec_username,codec_password,url).xpath('//Status/Provisioning/Software/Current/VersionId/text()')[0]
-            msg = (time.asctime()+" - CE Version running on "+hostname+" at "+hostLocation+" is:\n\t "+response)
-            print(msg)
-            #except:
-                #msg = (time.asctime()+" -  Can't reach host "+host)
+            try:
+                response = getCodecXML(host,codec_username,codec_password,url).xpath('//Status/Provisioning/Software/Current/VersionId/text()')[0]
+                msg = (time.asctime()+" - CE Version running on "+hostname+" at "+hostLocation+" is:\n\t "+response)
+                print(msg)
+            except:
+                msg = (time.asctime()+" -  Can't reach "+hostname+" at addr: "+host)
 
 
         elif intent == "sipStatus":
@@ -178,7 +183,7 @@ def intent(object, webhook):
             print (time.asctime(),"      POSTing to teams space id       ->  "+webhook['data']['roomId'])
             sendSparkPOST("https://api.ciscospark.com/v1/messages", {"roomId": webhook['data']['roomId'], "text": msg})
             #except:
-            #    msg = (time.asctime()+" -  Can't reach host "+hostname+" "+hostLocation+" at "+host)
+            #    msg = (time.asctime()+" -  Can't reach "+hostname+" at addr: "+host)
             #    print(msg)
             #    sendSparkPOST("https://api.ciscospark.com/v1/messages", {"roomId": webhook['data']['roomId'], "text": msg})
 
@@ -290,7 +295,7 @@ def intent(object, webhook):
                 msg = "Last Call Hostname: {}\n\t Host: {}\n\tRemote#: {}\n\tRemoteName: {}\n\tDirection: {}\n\tProtocol: {}\n\tCallType: {}\n\tSeconds: {}\n\tRequestedType: {}\n\tStart: {}\n\tEnd: {} ".format(hostname, host ,RemoteNumber,DisplayName,Direction,Protocol,CallType,Seconds,ReqCallType,StartTime,EndTime)
 
             except:
-                msg = "Failed getting Last Call Info"
+                msg = ("Failed getting Last Call Info for "+hostname+" at "+host)
                 print (msg)
 
         else:
