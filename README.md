@@ -33,7 +33,7 @@ MX800 Test at Kellers MX800 on webex sandbox at home office is:
 
 ## Features
 
-Here are the actions supported by QuickCheck:
+  Here are the actions supported by QuickCheck:  
   **help**       - This help menu  
   **list**       - Print endpoints from [endpoints.json](./include/endpoints.json) list.  
   **getStatus**  - Provides Standby Status.  
