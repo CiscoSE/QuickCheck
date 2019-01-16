@@ -35,7 +35,7 @@ MX800 Test at Kellers MX800 on webex sandbox at home office is:
 
   Here are the actions supported by QuickCheck:  
   **help**       - This help menu  
-  **list**       - Print endpoints from [endpoints.json](./include/endpoints.json) list.  
+  **list**       - Print endpoints from [endpoints.json](./endpoints.json) list.  
   **getStatus**  - Provides Standby Status.  
   **getDiags**   - List any diagnostic alerts.  
   **getVersion** - List current software version.  

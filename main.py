@@ -333,7 +333,7 @@ def loadEndpoints():
     # read file
     print(" ")
     print("Loading endpoints list from ./include/endpoints.json file")
-    with open('./include/endpoints.json', 'r') as myfile:
+    with open('./endpoints.json', 'r') as myfile:
         data=myfile.read()
 
     # parse file
