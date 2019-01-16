@@ -16,7 +16,7 @@ IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express
 or implied.
 """
 
- # Imports
+# Imports
 import json
 import cgi
 from http.server import BaseHTTPRequestHandler
@@ -38,17 +38,16 @@ from requests.packages.urllib3.exceptions import InsecureRequestWarning
 # Constants and Variables
 HOST_NAME = 'localhost'
 PORT_NUMBER = 10010
-bearer = "<<Your Bots Bearer Token"
+bearer = "<<replace with Your Bots Bearer Token>>"
 bot_email = "qc@webex.bot"
 bot_name = "QC"
-ngrok_auth_token = "<<Your ngrok auth token>>"
+ngrok_auth_token = "<<replace with Your ngrok auth token>>"
 ngrok_tunnel = " "
 ngrok_port = " "
 endpoints = " "
 
 
 # Methods
-
 def getCodecXML(addr,user,passwd,msg):
     """
     This method used to send (GET) messages - xAPI commands and requests to Cisco CE

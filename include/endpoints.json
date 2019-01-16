@@ -1,17 +1,17 @@
 {"endpoint":[
   { "name":"Cisco Berry Farms",
     "location":"Kellers DX70 on webex sandbox at home office",
-    "ipv4addr":"192.168.16.159",
+    "ipv4addr":"<<your endpoint IP>>",
     "type":"DX70",
-    "admin":"kelmcbri",
-    "password":"C1sc0123"
+    "admin":"<<your endpoint admin>>",
+    "password":"<<your endpoint password>>"
   },
   { "name":"MX800 Test",
     "location":"Kellers MX800 on webex sandbox at home office",
-    "ipv4addr":"192.168.16.149",
+    "ipv4addr":"<<your endpoint IP>>",
     "type":"MX800",
-    "admin":"kelmcbri",
-    "password":"C1sc0123"
+    "admin":"<<your endpoint admin>>",
+    "password":"<<your endpoint password>>"
   }
  ]
 }
