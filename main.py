@@ -38,11 +38,10 @@ from requests.packages.urllib3.exceptions import InsecureRequestWarning
 # Constants and Variables
 HOST_NAME = 'localhost'
 PORT_NUMBER = 10010
-bat_signal  = "https://upload.wikimedia.org/wikipedia/en/c/c6/Bat-signal_1989_film.jpg"
-bearer = "ZmNmYzUxYWYtMzc2My00NTMzLTg1MzYtYWQxZmQ2M2Q1Nzc5YTAyZWMzNzctNjZj_PF84_1eb65fdf-9643-417f-9974-ad72cae0e10f"
+bearer = "<<Your Bots Bearer Token"
 bot_email = "qc@webex.bot"
 bot_name = "QC"
-ngrok_auth_token = "65e18djioFKMQ1sxJ4RWL_4HAuhh76qZVnudrdpo4qs"
+ngrok_auth_token = "<<Your ngrok auth token>>"
 ngrok_tunnel = " "
 ngrok_port = " "
 endpoints = " "
