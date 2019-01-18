@@ -59,12 +59,15 @@ If people like your project, they will want to use it.  Show them how.
 ## Installation
 
 Provide a step-by-step series of examples and explanations for how to install your project and its dependencies.
+
+This code is written for **Python 3**... if you have a Mac, it comes with **Python 2**... you will need to upgrade to Python 3 or do a whole lot of changes to many of the methods for it to work.
+
 ###Pre-Requisites for QuickCheck###
   - Create a webex teams bot - I created QC@webex.bot
       How to create a webex teams bot (using python):
   https://developer.webex.com/blog/spark-bot-demo
   - Invite your bot to a webex teams space
-  - Create a webex teams webhook that will listen for messages to your bot and forward them to your bot handling app. (this app)
+  - Create a webex teams webhook that will listen for messages to your bot and forward them to a public address for your bot handling app.(this app)
     HowTo:
   - Get an account on ngrok which gives you a tunnel from ngrok to your laptop and a public address at ngrok for your webhook to send http messages to.  *** ngrok is sometimes considered a security risk by corporate security services, so check with IT before loading ngrok client on your laptop.
     - Launch ngrok client on laptop
@@ -77,9 +80,9 @@ Provide a step-by-step series of examples and explanations for how to install yo
       - edit your webex teams webhook with current ngrok target
 
 ## Useful links
-**Edit Webex Teams Webhook:**  https://developer.webex.com/my-apps/
-**How to Create a Webex Teams Bot**  https://developer.webex.com/blog/spark-bot-demo
-**ngrok dashboard**  https://dashboard.ngrok.com/status
+- **Edit Webex Teams Webhook:**  https://developer.webex.com/my-apps/
+- **How to Create a Webex Teams Bot**  https://developer.webex.com/blog/spark-bot-demo
+- **ngrok dashboard**  https://dashboard.ngrok.com/status
 
 
 
@@ -92,7 +95,9 @@ People responsible for the creation and maintenance of this project:
 
 ## Credits
 
-Give proper credit.  Inspired by another project or article?  Was your work made easier by a tutorial?  Include links to the people, projects, and resources that were influential in the creation of this project.
+The HTTP server code and the send get/post to webex teams methods were inspired by the code in the "How to create a webex teams bot" tutorial at:  https://developer.webex.com/blog/spark-bot-demo
+
+
 
 ## License
 

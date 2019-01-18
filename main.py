@@ -449,6 +449,7 @@ def checkWebhook():
 
 def sendSparkGET(url):
     """
+    This method is altered code from https://developer.webex.com/blog/spark-bot-demo
     This method is used for:
         -retrieving message text, when the webhook is triggered with a message
         -Getting the username of the person who posted the message if a command is recognized
@@ -462,6 +463,7 @@ def sendSparkGET(url):
 
 def sendSparkPOST(url, data):
     """
+    This method is altered code from https://developer.webex.com/blog/spark-bot-demo
     This method is used for:
         -posting a message to the Spark room to confirm that a command was received and processed
     """
@@ -475,6 +477,7 @@ def sendSparkPOST(url, data):
 
 class Server(BaseHTTPRequestHandler):
     '''
+    This class is -VERY- altered code from https://developer.webex.com/blog/spark-bot-demo
     When a request comes in, the BaseHTTPRequestHandler will automatically route
     the request to the appropriate request method (either do_GET, do_HEAD or
     do_POST) which we’ve defined on our subclass
