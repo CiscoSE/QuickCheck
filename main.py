@@ -34,7 +34,6 @@ import xmltodict
 from lxml import etree
 from requests.packages.urllib3.exceptions import InsecureRequestWarning
 
-
 # Constants and Variables
 HOST_NAME = 'localhost'
 PORT_NUMBER = 10010
@@ -45,12 +44,11 @@ ngrok_auth_token = "<<replace with Your ngrok auth token>>"
 ngrok_tunnel = " "
 ngrok_port = " "
 endpoints = " "
+# ***  Methods
 
-
-# Methods
 def getCodecXML(addr,user,passwd,msg):
     """
-    This method used to send (GET) messages - xAPI commands and requests to Cisco CE
+    Send (GET) messages - xAPI commands and requests to Cisco CE
     based codecs.
     """
     url = msg
@@ -61,7 +59,6 @@ def getCodecXML(addr,user,passwd,msg):
 
     # NOT checking certificates for https traffic
     requests.packages.urllib3.disable_warnings(InsecureRequestWarning)
-
 
     try:
         response = requests.get(url, verify=False, timeout=2, auth=(codec_username, codec_password))
@@ -119,7 +116,7 @@ def intent(object, webhook):
         hostname = x["name"]
         hostLocation = x["location"]
 
-        if intent == "help":
+        if intent ==   "help":
             msg = "Welcome to QuickCheck\n" \
                   "\n" \
                   "Here are the actions supported by QuickCheck:\n" \
@@ -130,13 +127,24 @@ def intent(object, webhook):
                   "getVersion - List current software version.\n" \
                   "sipStatus - List SIP registration Status.\n" \
                   "getLoss - List Packet Loss values.\n" \
-                  "getLast - List Last Call Details.\n"
+                  "getLast - List Last Call Details.\n" \
+                  "getPeople - List number of people in room.\n"
             print (time.asctime(),"      POSTing msg to Webex Teams      ->  "+msg)
             print (time.asctime(),"      POSTing to teams space id       ->  "+webhook['data']['roomId'])
             try:
                 sendSparkPOST("https://api.ciscospark.com/v1/messages", {"roomId": webhook['data']['roomId'], "text": msg})
             except:
                 print (time.asctime(),"      Failed sending to Webex   ->  ")
+            return
+
+        elif intent == "getPeople":
+            msg = (time.asctime()+"      Still coding getPeople method.")
+            print(msg)
+            try:
+                sendSparkPOST("https://api.ciscospark.com/v1/messages", {"roomId": webhook['data']['roomId'], "text": msg})
+            except:
+                print (time.asctime(),"      Failed sending to Webex   ->  ")
+
             return
 
         elif intent == "getStatus":
@@ -153,7 +161,6 @@ def intent(object, webhook):
         elif intent == "list":
             msg = (time.asctime()+"\t"+hostname+" address: "+host+" Location: "+hostLocation+"\n")
 
-
         elif intent == "getDiags":
             diags=""
             url = 'https://{}/getxml?location=/Status/Diagnostics'.format(host)
@@ -161,11 +168,15 @@ def intent(object, webhook):
                 response = getCodecXML(host,codec_username,codec_password,url)
                 tablecont = response.xpath('//Status/Diagnostics/Message/Description/text()')
                 tablelen = len(tablecont)
-                for x in range(0,tablelen):
-                    x = int(x)
-                    diags = diags+("\n\t"+response.xpath('//Status/Diagnostics/Message/Description/text()')[x])
-                    msg = (time.asctime()+" - Diagnostic Messages "+hostname+" at "+hostLocation+" are:"+diags)
+                if tablelen == 0:
+                    msg = (time.asctime()+" - Diagnostic Messages "+hostname+" at "+hostLocation+" are: No Alerts Found")
                     print(msg)
+                else:
+                    for x in range(0,tablelen):
+                        x = int(x)
+                        diags = diags+("\n\t"+response.xpath('//Status/Diagnostics/Message/Description/text()')[x])
+                        msg = (time.asctime()+" - Diagnostic Messages "+hostname+" at "+hostLocation+" are:"+diags)
+                        print(msg)
             except:
                 msg = (time.asctime()+" -  Can't reach "+hostname+" at addr: "+host)
 
@@ -180,8 +191,14 @@ def intent(object, webhook):
             except:
                 msg = (time.asctime()+" -  Can't reach "+hostname+" at addr: "+host)
 
-
         elif intent == "sipStatus":
+            msg = (time.asctime()+"      Still coding sipStatus method.")
+            print(msg)
+            try:
+                sendSparkPOST("https://api.ciscospark.com/v1/messages", {"roomId": webhook['data']['roomId'], "text": msg})
+            except:
+                print (time.asctime(),"      Failed sending to Webex   ->  ")
+            return
 
             url = 'https://{}/getxml?location=/Status/SIP/Registration'.format(host)
             #try:
@@ -204,6 +221,13 @@ def intent(object, webhook):
             url = 'https://{}/getxml?location=/Status/MediaChannels'.format(host)
             video = "No"
             audio = "No"
+            msg = (time.asctime()+"      Still coding getLoss method.")
+            print(msg)
+            try:
+                sendSparkPOST("https://api.ciscospark.com/v1/messages", {"roomId": webhook['data']['roomId'], "text": msg})
+            except:
+                print (time.asctime(),"      Failed sending to Webex   ->  ")
+            return
             try:
                 response = requests.get(url, verify=False, timeout=2, auth=(codec_username, codec_password))
                 xml_dict = xmltodict.parse(response.content)
@@ -272,6 +296,7 @@ def intent(object, webhook):
             except:
                 audio = "N/A"
             print(video,"   ",audio)
+            print(msg)
 
         elif intent == "getLast":
             """
