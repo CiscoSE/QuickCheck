@@ -103,6 +103,8 @@ def intent(object, webhook):
     This method is called by the local http server whenever an action is sent
     by the webex teams webhook - and performs appropriate operation on the
     Endpoints
+
+
     """
     intent = object
 
@@ -528,12 +530,11 @@ class Server(BaseHTTPRequestHandler):
             #in_message = result.get('text', '').lower()
             in_message = result.get('text', '')
             #in_message = in_message.replace(bot_name, '')
-            # first word in message is the action
+            # first word in message after bot name is the action
             x = in_message.split(" ", 1)
             x = x[1]
             intent(x, webhook)
             return "true"
-
 
     def handle_http(self, status, content_type):
         self.send_response(status)

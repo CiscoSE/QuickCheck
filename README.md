@@ -1,6 +1,6 @@
 # QC QuickCheck
 
-*Quick Check of Cisco CE endpoints info*
+* Webex Teams Bot to perform Quick Check of Cisco CE endpoints *
 
 ---
 
@@ -23,7 +23,7 @@ MX800 Test at Kellers MX800 on webex sandbox at home office is:
 
 ## Features
 
-###Welcome to QuickCheck###
+### Welcome to QuickCheck ###
 
 Here are the actions supported by QuickCheck:
 - **help** - This help menu
@@ -65,7 +65,7 @@ Provide a step-by-step series of examples and explanations for how to install yo
 
 This code is written for **Python 3**... if you have a Mac, it comes with **Python 2**... you will need to upgrade to Python 3 or do a whole lot of changes to many of the methods for it to work.
 
-###Pre-Requisites for QuickCheck###
+### Pre-Requisites for QuickCheck ###
   - Create a webex teams bot - I created QC@webex.bot
       How to create a webex teams bot (using python):
   https://developer.webex.com/blog/spark-bot-demo
