@@ -1,13 +1,10 @@
 #!/usr/bin/env python3
 """
 Copyright (c) 2019 Cisco and/or its affiliates.
-
 This software is licensed to you under the terms of the Cisco Sample
 Code License, Version 1.0 (the "License"). You may obtain a copy of the
 License at
-
                https://developer.cisco.com/docs/licenses
-
 All use of the material herein must be in accordance with the terms of
 the License. All rights not expressly granted by the License are
 reserved. Unless required by applicable law or agreed to separately in
@@ -17,51 +14,92 @@ or implied.
 """
 
 # Imports
-import json
+
+from json import loads,dumps
 import cgi
-from http.server import BaseHTTPRequestHandler
 import time
+from http.server import BaseHTTPRequestHandler
 from http.server import HTTPServer
 import http.client
 import urllib.request
-import urllib.parse
-import urllib
-import os
 import logging
 import ssl
 import requests
+from requests.packages.urllib3.exceptions import InsecureRequestWarning
 import xmltodict
 from lxml import etree
-from requests.packages.urllib3.exceptions import InsecureRequestWarning
 
 # Constants and Variables
+# HOST_NAME is the address on your laptop running HTTPServer, i.e. localhost
+# PORT_NUMBER is the port running ngrok tunnel i.e. 10010
+# BOT_BEARER is your Bot's Bearer Authentication
+# BOT_EMAIL is your Bot's email address i.e. qc@webex.bot
+# BOT_NAME is the case sensitive name you gave your Bot. i.e. QC
 HOST_NAME = 'localhost'
 PORT_NUMBER = 10010
-bearer = "<<replace with Your Bots Bearer Token>>"
-bot_email = "qc@webex.bot"
-bot_name = "QC"
-ngrok_auth_token = "<<replace with Your ngrok auth token>>"
+BOT_BEARER = "MmQzY2ZjOWItNTkxNS00ZDczLWExZTUtY2U5ZGExNGFmMDA0YTM5NjdmNTAtOGU1_PF84_1eb65fdf-9643-417f-9974-ad72cae0e10f"
+BOT_EMAIL = "qc@webex.bot"
+BOT_NAME = "QC"
+
 ngrok_tunnel = " "
 ngrok_port = " "
 endpoints = " "
+
+
 # ***  Methods
 
-def getCodecXML(addr,user,passwd,msg):
+def getMode(host,hostname,codec_username,codec_password):
+    """
+    There are differences in the xAPI calls for endpoints that are
+    registered to the cloud vs those that are registered on-prem so
+    this method determines if device is registered on-prem or cloud and
+    returns the 'Mode' of CUCM or Webex
+    """
+
+    mode = ""
+
+    url = 'https://{}/getxml?location=/Configuration/Provisioning'.format(host)
+
+    # GET the Mode. Response must be converted from XML to string with xpath
+    try:
+        mode = getCodecXML(
+                  host,
+                  codec_username,
+                  codec_password,
+                  url
+                ).xpath('//Configuration/Provisioning/Mode/text()')[0]
+        msg = (time.asctime()
+                +"     "
+                +hostname
+                +"  Mode is: "
+                +response)
+        print(msg)
+    except:
+        msg = (time.asctime()
+               +" -  Can't reach "+hostname
+               +" at addr: "+host
+               +" to determine Mode")
+    print(msg)
+
+    return mode
+
+def getCodecXML(host,codec_username,codec_password,url):
     """
     Send (GET) messages - xAPI commands and requests to Cisco CE
     based codecs.
     """
-    url = msg
-    codec_username = user
-    codec_password = passwd
-    url = msg
-    host = addr
 
-    # NOT checking certificates for https traffic
+    # NOT checking certificates for https traffic. If you don't put this
+    #    command in, your gets will encounter security pop-ups
     requests.packages.urllib3.disable_warnings(InsecureRequestWarning)
 
     try:
-        response = requests.get(url, verify=False, timeout=2, auth=(codec_username, codec_password))
+        response = requests.get(
+            url,
+            verify=False,
+            timeout=2,
+            auth=(codec_username, codec_password)
+            )
         xmlstr = response.content
         root = etree.fromstring(xmlstr)
         return root
@@ -72,22 +110,23 @@ def getCodecXML(addr,user,passwd,msg):
 
     return
 
-def postCodecXML(host,user,passwd,url,payload,headers):
+def postCodecXML(host,codec_username,codec_password,url,payload,headers):
     """
     This method used to POST messages - xAPI commands and requests to Cisco CE
     based codecs.
     """
-    codec_username = user
-    codec_password = passwd
-    url = url
-    host = host
-    payload = payload
-    headers = headers
 
     # NOT checking certificates for https traffic
+    requests.packages.urllib3.disable_warnings(InsecureRequestWarning)
     try:
-        requests.packages.urllib3.disable_warnings(InsecureRequestWarning)
-        response = requests.post(url, data=payload, verify=False, timeout=2, headers=headers, auth=(codec_username, codec_password))
+        response = requests.post(
+                      url,
+                      data=payload,
+                      verify=False,
+                      timeout=2,
+                      headers=headers,
+                      auth=(codec_username, codec_password)
+                      )
         #print ("response String : "+response.text)
         xmlstr = response.text
         root = etree.fromstring(xmlstr)
@@ -103,8 +142,6 @@ def intent(object, webhook):
     This method is called by the local http server whenever an action is sent
     by the webex teams webhook - and performs appropriate operation on the
     Endpoints
-
-
     """
     intent = object
 
@@ -117,6 +154,8 @@ def intent(object, webhook):
         codec_password = x["password"]
         hostname = x["name"]
         hostLocation = x["location"]
+
+        mode = getMode(host,hostname,codec_username,codec_password)
 
         if intent ==   "help":
             msg = "Welcome to QuickCheck\n" \
@@ -131,10 +170,17 @@ def intent(object, webhook):
                   "getLoss - List Packet Loss values.\n" \
                   "getLast - List Last Call Details.\n" \
                   "getPeople - List number of people in room.\n"
-            print (time.asctime(),"      POSTing msg to Webex Teams      ->  "+msg)
-            print (time.asctime(),"      POSTing to teams space id       ->  "+webhook['data']['roomId'])
+            print (time.asctime(),
+                     "      POSTing msg to Webex Teams      ->  "
+                     +msg
+                     )
+            print (time.asctime(),
+                     "      POSTing to teams space id       ->  "
+                     +webhook['data']['roomId']
+                     )
             try:
-                sendSparkPOST("https://api.ciscospark.com/v1/messages", {"roomId": webhook['data']['roomId'], "text": msg})
+                sendSparkPOST("https://api.ciscospark.com/v1/messages",
+                   {"roomId": webhook['data']['roomId'], "text": msg})
             except:
                 print (time.asctime(),"      Failed sending to Webex   ->  ")
             return
@@ -143,7 +189,8 @@ def intent(object, webhook):
             msg = (time.asctime()+"      Still coding getPeople method.")
             print(msg)
             try:
-                sendSparkPOST("https://api.ciscospark.com/v1/messages", {"roomId": webhook['data']['roomId'], "text": msg})
+                sendSparkPOST("https://api.ciscospark.com/v1/messages",
+                   {"roomId": webhook['data']['roomId'], "text": msg})
             except:
                 print (time.asctime(),"      Failed sending to Webex   ->  ")
 
@@ -303,7 +350,6 @@ def intent(object, webhook):
         elif intent == "getLast":
             """
             getLast gives stats on last call
-
             """
 
             url = 'https://{}/putxml'.format(host)
@@ -364,7 +410,7 @@ def loadEndpoints():
         data=myfile.read()
 
     # parse file
-    endpoints = json.loads(data)
+    endpoints = loads(data)
 
     # show values
     for x in endpoints["endpoint"]:
@@ -390,7 +436,8 @@ def checkNgrok():
     headers = { 'cache-control': "no-cache" }
     conn.request("GET", "/api/tunnels", payload, headers)
     res = conn.getresponse()
-    data = json.loads(res.read())
+    #data = loads(res.read())
+    data = loads(res.read())
     for x in data["tunnels"]:
         print("ngrok public_url     : "+x["public_url"])
         print("ngrok tunnel on port : "+x["config"]["addr"])
@@ -411,12 +458,12 @@ def checkWebhook():
     conn = http.client.HTTPSConnection("api.ciscospark.com")
     payload = ""
     headers = {
-        'Authorization': "Bearer "+bearer,
+        'Authorization': "Bearer "+BOT_BEARER,
         'cache-control': "no-cache"
         }
     conn.request("GET", "/v1/webhooks", payload, headers)
     res = conn.getresponse()
-    data = json.loads(res.read())
+    data = loads(res.read())
 
     for x in data["items"]:
         print("Webex Teams Webhook Name: "+x["name"])
@@ -430,9 +477,9 @@ def checkWebhook():
 
     print("Updating webex teams Webhook target url with current ngrok tunnel")
     conn = http.client.HTTPSConnection("api.ciscospark.com")
-    payload = json.dumps({"name":"QC Webhook","targetUrl":ngrok_tunnel})
+    payload = dumps({"name":"QC Webhook","targetUrl":ngrok_tunnel})
     headers = {
-    'Authorization': "Bearer "+bearer,
+    'Authorization': "Bearer "+BOT_BEARER,
     'Content-Type': "application/json",
     'cache-control': "no-cache"
     }
@@ -440,7 +487,7 @@ def checkWebhook():
         conn.request("PUT", "/v1/webhooks/"+webhookId, payload, headers)
 
         res = conn.getresponse()
-        data = json.loads(res.read())
+        data = loads(res.read())
 
         print("Webex Teams Webhook updated:")
         print("Webhook name       : "+data["name"])
@@ -459,7 +506,7 @@ def sendSparkGET(url):
     therequest = urllib.request.Request(url,
                             headers={"Accept" : "application/json",
                                      "Content-Type":"application/json"})
-    therequest.add_header("Authorization", "Bearer "+bearer)
+    therequest.add_header("Authorization", "Bearer "+BOT_BEARER)
     contents = urllib.request.urlopen(therequest).read()
     return contents
 
@@ -469,8 +516,8 @@ def sendSparkPOST(url, data):
     This method is used for:
         -posting a message to the Spark room to confirm that a command was received and processed
     """
-    therequest = urllib.request.Request(url,bytes(json.dumps(data),"utf8"))
-    therequest.add_header("Authorization", "Bearer "+bearer)
+    therequest = urllib.request.Request(url,bytes(dumps(data),"utf8"))
+    therequest.add_header("Authorization", "Bearer "+BOT_BEARER)
     therequest.add_header("Accept", "application/json")
     therequest.add_header("Content-Type", "application/json")
 
@@ -485,7 +532,6 @@ class Server(BaseHTTPRequestHandler):
     do_POST) which we’ve defined on our subclass
     We’ll use handle_http to send our basic http handlers and then return the content.
         - respond will be in charge of sending the actual response out
-
     The flow of data will look like this when a request is received:
     do_* receives request > respond invoked > handle_http bootstraps request,
     returns content > respond sends the response
@@ -501,7 +547,7 @@ class Server(BaseHTTPRequestHandler):
     def do_GET(self):
         # GET sends back a Hello world message
         self._set_headers()
-        self.wfile.write(bytes(json.dumps({'Response': 'A Msg to you', 'Details': 'You sent a GET not a Post'}),"utf8"))
+        self.wfile.write(bytes(dumps({'Response': 'A Msg to you', 'Details': 'You sent a GET not a Post'}),"utf8"))
 
     def do_POST(self):
         ctype, pdict = cgi.parse_header(self.headers.get('content-type'))
@@ -514,10 +560,10 @@ class Server(BaseHTTPRequestHandler):
 
         # read the message and convert it into a python dictionary
         length = int(self.headers.get('content-length'))
-        webhook = json.loads(self.rfile.read(length))
+        webhook = loads(self.rfile.read(length))
         #print (webhook['data']['id'])
         result = sendSparkGET('https://api.ciscospark.com/v1/messages/{0}'.format(webhook['data']['id']))
-        result = json.loads(result)
+        result = loads(result)
         if "text" in result:
             print (time.asctime(),"   TXT received via Post from webhook <- ",result["text"])
         if "files" in result:
@@ -526,10 +572,10 @@ class Server(BaseHTTPRequestHandler):
         print (time.asctime(),"      Received from teams space id    <- ",result["roomId"])
 
         msg = None
-        if webhook['data']['personEmail'] != bot_email:
+        if webhook['data']['personEmail'] != BOT_EMAIL:
             #in_message = result.get('text', '').lower()
             in_message = result.get('text', '')
-            #in_message = in_message.replace(bot_name, '')
+            #in_message = in_message.replace(BOT_NAME, '')
             # first word in message after bot name is the action
             x = in_message.split(" ", 1)
             x = x[1]

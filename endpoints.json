@@ -1,10 +1,10 @@
 {"endpoint":[
   { "name":"Cisco Berry Farms",
     "location":"Kellers DX80 Cisco Office",
-    "ipv4addr":"<<YOUR IP Address Here>>",
+    "ipv4addr":"10.150.183.57",
     "type":"DX80",
-    "admin":"<<your endpoint admin>>",
-    "password":"<<your endpoint password>>"
+    "admin":"kelmcbri",
+    "password":"C1sc0123"
   },
   { "name":"MX800 Test",
     "location":"Kellers MX800 on webex sandbox at home office",

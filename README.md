@@ -66,8 +66,7 @@ Provide a step-by-step series of examples and explanations for how to install yo
 This code is written for **Python 3**... if you have a Mac, it comes with **Python 2**... you will need to upgrade to Python 3 or do a whole lot of changes to many of the methods for it to work.
 
 ### Pre-Requisites for QuickCheck ###
-  - Create a webex teams bot - I created QC@webex.bot
-      How to create a webex teams bot (using python):
+  - Create a webex teams bot - I created QC@webex.bot starting from the "How to create a webex teams bot (using python)":
   https://developer.webex.com/blog/spark-bot-demo
   - Invite your bot to a webex teams space
   - Create a webex teams webhook that will listen for messages to your bot and forward them to a public address for your bot handling app.(this app)
@@ -95,12 +94,15 @@ People responsible for the creation and maintenance of this project:
 
 - Keller McBride <kelmcbri@cisco.com>
 - Trey George <ergeorge@cisco.com>
+- Joe Bourne <jbourne@cisco.com>
 
 ## Credits
 
 The HTTP server code and the send get/post to webex teams methods were inspired by the code in the "How to create a webex teams bot" tutorial at:  https://developer.webex.com/blog/spark-bot-demo
+The original python 2 code for this tutorial can be found at "tahanson's" repository at https://github.com/webex/SparkBotDemo/blob/master/bot_demo.py
 
 
+We pulled from Steve Sfartz Postman Collection Github Repository at https://github.com/CiscoDevNet/postman-xapi to create actions/intents, i.e. commands you can execute with QuickCheck bot.
 
 ## License
 
