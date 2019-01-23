@@ -1,17 +1,17 @@
 {"endpoint":[
-  { "name”:”<<Your Device Name>>“,
-    "location”:”<<Your device Location>>“,
-    "ipv4addr”:”<<Your device IP Address“,
-    "type”:”<<Your Device Type”,
-    "admin”:”<<Your Device Admin Name>>“,
-    "password”:”<<Your Device Admin Password>>“
+  { "name":"Keller DX80",
+    "location":"Cisco Office",
+    "ipv4addr":"10.150.183.57",
+    "type":"DX80",
+    "admin":"kelmcbri",
+    "password":"C1sc0123"
   },
-  { "name”:”<<Your Device Name>>“,
-    "location”:”<<Your device Location>>“,
-    "ipv4addr”:”<<Your device IP Address“,
-    "type”:”<<Your Device Type”,
-    "admin”:”<<Your Device Admin Name>>“,
-    "password”:”<<Your Device Admin Password>>“
+  { "name":"Bogus",
+    "location":"Nowhere",
+    "ipv4addr":"192.168.16.10",
+    "type":"DX80",
+    "admin":"kelmcbri",
+    "password":"C1sc0123"
   }
  ]
 }

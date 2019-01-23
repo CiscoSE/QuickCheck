@@ -13,6 +13,7 @@ IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express
 or implied.
 """
 
+
 # Imports
 
 from json import loads,dumps
@@ -35,16 +36,43 @@ from lxml import etree
 # BOT_BEARER is your Bot's Bearer Authentication
 # BOT_EMAIL is your Bot's email address i.e. qc@webex.bot
 # BOT_NAME is the case sensitive name you gave your Bot. i.e. QC
-HOST_NAME = 'localhost'
-PORT_NUMBER = <<your ngrok tunnel port>>
-BOT_BEARER = “<<Your Bots Bearer token>>f"
-BOT_EMAIL = “<<Your Bots Email Address>>“
-BOT_NAME = “<<Your Bots case sensitive name>>“
-
+#HOST_NAME = 'localhost'
+#PORT_NUMBER = 10010
+#BOT_BEARER = 'OGRhMjhjNWMtNDExNS00YzU2LTg1ODItMjgwYzkzMjEyMDU1NTA2ZjY0NjktZDBh_PF84_1eb65fdf-9643-417f-9974-ad72cae0e10f'
+#BOT_EMAIL = 'qc@webex.bot'
+#BOT_NAME = "QC"
 ngrok_tunnel = " "
 ngrok_port = " "
 
+
 # ***  Methods
+def getConfig():
+    """
+    This method reads the ./config.json file into the params
+      variable.  These are the endpoints that will be acted on whenever a
+      the QuickCheck bot invokes an action.
+    """
+    global HOST_NAME, PORT_NUMBER, BOT_BEARER, BOT_EMAIL, BOT_NAME
+
+
+    # read file
+    print(" ")
+    print("Loading params list from ./config.json file")
+    with open('./config.json', 'r') as myfile:
+        data=myfile.read()
+
+    # parse file
+    params = loads(data)
+    print(" HERE ARE THE PARAMS :"+dumps(params))
+    print (" HOST NAME : "+params["HOST_NAME"])
+
+    HOST_NAME = params["HOST_NAME"]
+    PORT_NUMBER = int(params["PORT_NUMBER"])
+    BOT_BEARER = params["BOT_BEARER"]
+    BOT_EMAIL = params["BOT_EMAIL"]
+    BOT_NAME = params["BOT_NAME"]
+
+    return
 
 def getMode(host,hostname,codec_username,codec_password):
     """
@@ -152,11 +180,6 @@ def intent(action, webhook):
     """
     intent = action
 
-    print(time.asctime(),
-          '   Intent received is ',
-          intent
-          )
-
     # Iterate through all the endpoints in the endpoints list
     for x in endpoints["endpoint"]:
         host = x["ipv4addr"]
@@ -201,7 +224,7 @@ def intent(action, webhook):
                 print (time.asctime(),"      Failed sending to Webex   ->  ")
             return
 
-        elif intent == "getPeople":
+        elif intent == "getpeople":
             msg = (time.asctime()+"      Still coding getPeople method.")
             print(msg)
             try:
@@ -216,7 +239,7 @@ def intent(action, webhook):
 
             return
 
-        elif intent == "getStatus":
+        elif intent == "getstatus":
 
             url = 'https://{}/getxml?location=/Status/Standby'.format(host)
 
@@ -228,7 +251,7 @@ def intent(action, webhook):
                                        url
                                        ).xpath('//Status/Standby/State/text()')[0]
                 msg = (time.asctime()
-                       +" - Standby status of "
+                       +"    Standby status of "
                        +hostname
                        +" at "
                        +hostLocation
@@ -242,6 +265,7 @@ def intent(action, webhook):
                       +hostname
                       +" at addr: "
                       +host
+                      +" to determine Standby Status"
                       )
 
         elif intent == "list":
@@ -255,7 +279,7 @@ def intent(action, webhook):
                   +"\n"
                   )
 
-        elif intent == "getDiags":
+        elif intent == "getdiags":
             diags=""
             url = 'https://{}/getxml?location=/Status/Diagnostics'.format(host)
             #reponse holds all the diags, must break out individual diags
@@ -287,7 +311,7 @@ def intent(action, webhook):
                       +host
                       +" to determine Diags.")
 
-        elif intent == "getVersion":
+        elif intent == "getversion":
 
             url = 'https://{}/getxml?location=/Status/Provisioning/Software/Current'.format(host)
 
@@ -316,7 +340,7 @@ def intent(action, webhook):
                        +" to get version"
                       )
 
-        elif intent == "sipStatus":
+        elif intent == "sipstatus":
 
             url = 'https://{}/getxml?location=/Status/SIP/Registration'.format(host)
             try:
@@ -342,7 +366,7 @@ def intent(action, webhook):
                 print(msg)
                 #sendSparkPOST("https://api.ciscospark.com/v1/messages", {"roomId": webhook['data']['roomId'], "text": msg})
 
-        elif intent == "getLoss":
+        elif intent == "getloss":
             url = 'https://{}/getxml?location=/Status/MediaChannels'.format(host)
             video = "No"
             audio = "No"
@@ -445,7 +469,7 @@ def intent(action, webhook):
                   )
             print(msg)
 
-        elif intent == "getLast":
+        elif intent == "getlast":
             """
             getLast gives stats on last call
             """
@@ -498,14 +522,14 @@ def intent(action, webhook):
 
 def loadEndpoints():
     """
-    This method reads the ./include/endpoints.json file into the loadEndpoints
+    This method reads the ./endpoints.json file into the loadEndpoints
       variable.  These are the endpoints that will be acted on whenever a
       the QuickCheck bot invokes an action.
     """
     global endpoints
     # read file
     print(" ")
-    print("Loading endpoints list from ./include/endpoints.json file")
+    print("Loading endpoints list from ./endpoints.json file")
     with open('./endpoints.json', 'r') as myfile:
         data=myfile.read()
 
@@ -548,13 +572,13 @@ def checkNgrok():
 def checkWebhook():
     """
     This module checks to see if a webhook is already in place with webex
-    teams to send chat traffic from qc.webex.bot to the http server in this
+    teams to send chat traffic from your bot to the http server in this
     main.py program.  The webhook actually points to a public address hosted
     by ngrok which tunnels the traffic to the local http server.
     """
 
     print(" ")
-    print("Checking Webex Teams to see if webhook for qc.webex.bot is enabled")
+    print("Checking Webex Teams to see if webhook for your bot is enabled")
     conn = http.client.HTTPSConnection("api.ciscospark.com")
     payload = ""
     headers = {
@@ -661,7 +685,6 @@ class Server(BaseHTTPRequestHandler):
         # read the message and convert it into a python dictionary
         length = int(self.headers.get('content-length'))
         webhook = loads(self.rfile.read(length))
-        #print (webhook['data']['id'])
         result = sendSparkGET('https://api.ciscospark.com/v1/messages/{0}'.format(webhook['data']['id']))
         result = loads(result)
         if "text" in result:
@@ -673,12 +696,18 @@ class Server(BaseHTTPRequestHandler):
 
         msg = None
         if webhook['data']['personEmail'] != BOT_EMAIL:
-            #in_message = result.get('text', '').lower()
-            in_message = result.get('text', '')
-            #in_message = in_message.replace(BOT_NAME, '')
-            # first word in message after bot name is the action
-            x = in_message.split(" ", 1)
-            x = x[1]
+            #If the incoming message is not from BOT_EMAIL, then convert the
+            # incoming message to lower case and strip out BOT_NAME
+            bot_name_lower = BOT_NAME.lower()
+            in_message = result.get('text', '').lower()
+
+            in_message = in_message.replace(str(bot_name_lower), '')
+            in_message = in_message.strip()
+
+            # first word in message after bot name removed is now the action
+            # to be acted on
+            x = in_message.split(" ", -1)
+            x = x[0]
             intent(x, webhook)
             return "true"
 
@@ -695,6 +724,9 @@ class Server(BaseHTTPRequestHandler):
 def main():
  # Turn on logging
     logger = logging.getLogger(__name__)
+ # Get configuration parameters from config.json file
+    getConfig()
+
  # Check on ngrok tunnels
     checkNgrok()
  # Check on Webex Teams webhook
