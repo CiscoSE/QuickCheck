@@ -1,6 +1,0 @@
-{"HOST_NAME":"localhost",
-"PORT_NUMBER":"your ngrok http port number i.e. 10010",
-"BOT_BEARER":"your bots bearer token",
-"BOT_EMAIL":"your bots email address",
-"BOT_NAME":"your bots name"
-}
