@@ -286,7 +286,7 @@ def intent(action, webhook):
 
                 except:
                     msg = (time.asctime()
-                           +" -  Can't reach "
+                           +" E  Can't reach "
                            +hostname
                            +" at addr: "
                            +host
