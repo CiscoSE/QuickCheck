@@ -43,8 +43,6 @@ BOT_NAME = "QC"
 
 ngrok_tunnel = " "
 ngrok_port = " "
-endpoints = " "
-
 
 # ***  Methods
 
@@ -69,17 +67,18 @@ def getMode(host,hostname,codec_username,codec_password):
                   url
                 ).xpath('//Configuration/Provisioning/Mode/text()')[0]
         msg = (time.asctime()
-                +"     "
+                +"    "
                 +hostname
                 +"  Mode is: "
-                +response)
+                +mode)
         print(msg)
     except:
         msg = (time.asctime()
-               +" -  Can't reach "+hostname
-               +" at addr: "+host
+               +" E  Can't reach "+hostname
+               +" at addr: "
+               +host
                +" to determine Mode")
-    print(msg)
+        print(msg)
 
     return mode
 
@@ -105,7 +104,11 @@ def getCodecXML(host,codec_username,codec_password,url):
         return root
 
     except:
-        msg = (time.asctime()+" -  Can't reach host "+host)
+        msg = (time.asctime()
+              +" E  Can't reach host "
+              +host
+              +" to GET XML request"
+              )
         print(msg)
 
     return
@@ -132,22 +135,29 @@ def postCodecXML(host,codec_username,codec_password,url,payload,headers):
         root = etree.fromstring(xmlstr)
         return root
     except:
-        msg = (time.asctime()+" -  Can't reach host "+host)
+        msg = (time.asctime()
+              +" E  Can't reach host "
+              +host
+              +" to POST XML request"
+              )
         print(msg)
 
     return
 
-def intent(object, webhook):
+def intent(action, webhook):
     """
     This method is called by the local http server whenever an action is sent
     by the webex teams webhook - and performs appropriate operation on the
     Endpoints
     """
-    intent = object
+    intent = action
 
+    print(time.asctime(),
+          '   Intent received is ',
+          intent
+          )
 
-    print(time.asctime(),'   Intent received is ',intent)
-
+    # Iterate through all the endpoints in the endpoints list
     for x in endpoints["endpoint"]:
         host = x["ipv4addr"]
         codec_username = x["admin"]
@@ -155,8 +165,10 @@ def intent(object, webhook):
         hostname = x["name"]
         hostLocation = x["location"]
 
+        # Find out if endpoint is cloud or onprem registered
         mode = getMode(host,hostname,codec_username,codec_password)
 
+        # Act on intent/Action
         if intent ==   "help":
             msg = "Welcome to QuickCheck\n" \
                   "\n" \
@@ -180,7 +192,11 @@ def intent(object, webhook):
                      )
             try:
                 sendSparkPOST("https://api.ciscospark.com/v1/messages",
-                   {"roomId": webhook['data']['roomId'], "text": msg})
+                                {
+                                "roomId": webhook['data']['roomId'],
+                                "text": msg
+                                }
+                              )
             except:
                 print (time.asctime(),"      Failed sending to Webex   ->  ")
             return
@@ -190,9 +206,13 @@ def intent(object, webhook):
             print(msg)
             try:
                 sendSparkPOST("https://api.ciscospark.com/v1/messages",
-                   {"roomId": webhook['data']['roomId'], "text": msg})
+                                {
+                                "roomId": webhook['data']['roomId'],
+                                "text": msg
+                                }
+                             )
             except:
-                print (time.asctime(),"      Failed sending to Webex   ->  ")
+                print (time.asctime()," E    Failed sending to Webex   ->  ")
 
             return
 
@@ -201,24 +221,57 @@ def intent(object, webhook):
             url = 'https://{}/getxml?location=/Status/Standby'.format(host)
 
             try:
-                response = getCodecXML(host,codec_username,codec_password,url).xpath('//Status/Standby/State/text()')[0]
-                msg = (time.asctime()+" - Standby status of "+hostname+" at "+hostLocation+" is: "+response)
+                response = getCodecXML(
+                                       host,
+                                       codec_username,
+                                       codec_password,
+                                       url
+                                       ).xpath('//Status/Standby/State/text()')[0]
+                msg = (time.asctime()
+                       +" - Standby status of "
+                       +hostname
+                       +" at "
+                       +hostLocation
+                       +" is: "
+                       +response
+                       )
                 print(msg)
             except:
-                msg = (time.asctime()+" -  Can't reach "+hostname+" at addr: "+host)
+                msg = (time.asctime()
+                      +" -  Can't reach "
+                      +hostname
+                      +" at addr: "
+                      +host
+                      )
 
         elif intent == "list":
-            msg = (time.asctime()+"\t"+hostname+" address: "+host+" Location: "+hostLocation+"\n")
+            msg = (time.asctime()
+                  +"\t"
+                  +hostname
+                  +" address: "
+                  +host
+                  +" Location: "
+                  +hostLocation
+                  +"\n"
+                  )
 
         elif intent == "getDiags":
             diags=""
             url = 'https://{}/getxml?location=/Status/Diagnostics'.format(host)
+            #reponse holds all the diags, must break out individual diags
             try:
                 response = getCodecXML(host,codec_username,codec_password,url)
+                #How many diagnostic items are there
                 tablecont = response.xpath('//Status/Diagnostics/Message/Description/text()')
                 tablelen = len(tablecont)
                 if tablelen == 0:
-                    msg = (time.asctime()+" - Diagnostic Messages "+hostname+" at "+hostLocation+" are: No Alerts Found")
+                    msg = (time.asctime()
+                          +" - Diagnostic Messages "
+                          +hostname
+                          +" at "
+                          +hostLocation
+                          +" are: No Alerts Found"
+                          )
                     print(msg)
                 else:
                     for x in range(0,tablelen):
@@ -227,81 +280,112 @@ def intent(object, webhook):
                         msg = (time.asctime()+" - Diagnostic Messages "+hostname+" at "+hostLocation+" are:"+diags)
                         print(msg)
             except:
-                msg = (time.asctime()+" -  Can't reach "+hostname+" at addr: "+host)
+                msg = (time.asctime()
+                      +" E  Can't reach "
+                      +hostname
+                      +" at addr: "
+                      +host
+                      +" to determine Diags.")
 
         elif intent == "getVersion":
 
             url = 'https://{}/getxml?location=/Status/Provisioning/Software/Current'.format(host)
 
             try:
-                response = getCodecXML(host,codec_username,codec_password,url).xpath('//Status/Provisioning/Software/Current/VersionId/text()')[0]
-                msg = (time.asctime()+" - CE Version running on "+hostname+" at "+hostLocation+" is:\n\t "+response)
+                response = getCodecXML(
+                                      host,
+                                      codec_username,
+                                      codec_password,
+                                      url
+                                      ).xpath('//Status/Provisioning/Software/Current/VersionId/text()')[0]
+                msg = (time.asctime()
+                       +"    CE Version running on "
+                       +hostname
+                       +" at "
+                       +hostLocation
+                       +" is: "
+                       +response
+                       )
                 print(msg)
             except:
-                msg = (time.asctime()+" -  Can't reach "+hostname+" at addr: "+host)
+                msg = (time.asctime()
+                       +" E  Can't reach "
+                       +hostname
+                       +" at addr: "
+                       +host
+                       +" to get version"
+                      )
 
         elif intent == "sipStatus":
-            msg = (time.asctime()+"      Still coding sipStatus method.")
-            print(msg)
-            try:
-                sendSparkPOST("https://api.ciscospark.com/v1/messages", {"roomId": webhook['data']['roomId'], "text": msg})
-            except:
-                print (time.asctime(),"      Failed sending to Webex   ->  ")
-            return
 
             url = 'https://{}/getxml?location=/Status/SIP/Registration'.format(host)
-            #try:
-            response = requests.get(url, verify=False, timeout=2, auth=(codec_username, codec_password))
-            xmlstr = response.content
-            root = etree.fromstring(xmlstr)
-            print(etree.tostring(root, encoding="UTF-8"))
-            status = root.xpath('//Status/SIP/Registration/Status/text()')[0]
-            msg = ("Host Sip Registration Status is: "+status)
-            print(time.asctime(),"      Received SIP Registration Stat  <- ",status)
-            print (time.asctime(),"      POSTing msg to Webex Teams      ->  "+status)
-            print (time.asctime(),"      POSTing to teams space id       ->  "+webhook['data']['roomId'])
-            sendSparkPOST("https://api.ciscospark.com/v1/messages", {"roomId": webhook['data']['roomId'], "text": msg})
-            #except:
-            #    msg = (time.asctime()+" -  Can't reach "+hostname+" at addr: "+host)
-            #    print(msg)
-            #    sendSparkPOST("https://api.ciscospark.com/v1/messages", {"roomId": webhook['data']['roomId'], "text": msg})
+            try:
+                response = requests.get(url, verify=False, timeout=2, auth=(codec_username, codec_password))
+                xmlstr = response.content
+                root = etree.fromstring(xmlstr)
+                status = root.xpath('//Status/SIP/Registration/Status/text()')[0]
+                msg = (time.asctime()
+                      +"    "
+                      +hostname
+                      +" Sip Registration Status is: **"
+                      +status
+                      +"**"
+                      )
+            except:
+                msg = (time.asctime()
+                      +" E  Can't reach "
+                      +hostname
+                      +" at addr: "
+                      +host
+                      +" to determine SIP Registration Status"
+                      )
+                print(msg)
+                #sendSparkPOST("https://api.ciscospark.com/v1/messages", {"roomId": webhook['data']['roomId'], "text": msg})
 
         elif intent == "getLoss":
             url = 'https://{}/getxml?location=/Status/MediaChannels'.format(host)
             video = "No"
             audio = "No"
-            msg = (time.asctime()+"      Still coding getLoss method.")
-            print(msg)
-            try:
-                sendSparkPOST("https://api.ciscospark.com/v1/messages", {"roomId": webhook['data']['roomId'], "text": msg})
-            except:
-                print (time.asctime(),"      Failed sending to Webex   ->  ")
-            return
-            try:
-                response = requests.get(url, verify=False, timeout=2, auth=(codec_username, codec_password))
-                xml_dict = xmltodict.parse(response.content)
-            except:
-                video = "N/A"
-                audio = "N/A"
-                return video, audio
-            try:
-                check = xml_dict["Status"]["MediaChannels"]
-                if check != "None":
-                    channels = xml_dict["Status"]["MediaChannels"]["Call"]["Channel"]
-                    for channel in channels:
-                        if "Video" in channel.keys() and channel["Video"]["ChannelRole"] == "Main":
-                            direction = channel["Direction"]
-                            if direction == "Incoming":
-                                lossin = float(channel["Netstat"]["Loss"])
-                                pksin = float(channel["Netstat"]["Packets"])
-
-                                if lossin == 0:
-                                    totalin = 0
-                                else:
-                                    totalin = (lossin/pksin)* 100
-                                if (totalin > 5):
-                                    video = "Yes"
+            #try:
+            response = requests.get(url, verify=False, timeout=2, auth=(codec_username, codec_password))
+            xml_dict = xmltodict.parse(response.content)
+            #print(xml_dict)
+            #except:
+                #video = "N/A"
+                #audio = "N/A"
+                #msg = (
+                       #time.asctime()
+                       #+" Loss Stats for "
+                       #+hostname
+                       #+"    Video Loss: "
+                       #+video
+                       #+"  Audio Loss: "
+                       #+audio
+                      #)
+                #return video, audio
+            #try:
+            check = xml_dict["Status"]["MediaChannels"]
+            if check != "None":
+                totalin = 0
+                totalout = 0
+                channels = xml_dict["Status"]["MediaChannels"]["Call"]["Channel"]
+                for channel in channels:
+                    print(channel)
+                    if "Video" in channel.keys() and channel["Video"]["ChannelRole"] == "Main":
+                        direction = channel["Direction"]
+                        print("The DIRECTION is :"+direction)
+                        if direction == "Incoming":
+                            lossin = float(channel["Netstat"]["Loss"])
+                            pksin = float(channel["Netstat"]["Packets"])
+                            print("lossin is : "+str(lossin))
+                            if lossin == 0:
+                                totalin = 0
                             else:
+                                totalin = (lossin/pksin)* 100
+                            if (totalin > 5):
+                                    video = "Yes"
+                        else:
+                            try:
                                 lossout = float(channel["Netstat"]["Loss"])
                                 pksout = float(channel["Netstat"]["Packets"])
 
@@ -311,10 +395,14 @@ def intent(object, webhook):
                                     totalout = (lossout / pksout) * 100
                                 if (totalout > 5):
                                     video = "Yes"
-                else:
-                    video = "N/A"
-            except:
+                            except:
+                                print("There wasn't a field for netstat")        
+                    print("\n\n Video IN : "+str(totalin)+" Video Out : "+str(totalout))
+
+            else:
                 video = "N/A"
+            #except:
+                #video = "N/A"
             try:
                 check = xml_dict["Status"]["MediaChannels"]
                 if check != "None":
@@ -335,16 +423,26 @@ def intent(object, webhook):
                             else:
                                 lossout = float(channel["Netstat"]["Loss"])
                                 pksout = float(channel["Netstat"]["Packets"])
-                                if lossout == 0:                                        totalout = 0
+                                if lossout == 0:
+                                    totalout = 0
                                 else:
                                     totalout = (lossout/pksout)* 100
                                 if (totalout > 5):
                                     audio = "Yes"
+                        print("Channel "+channel+" Audio IN : "+totalin+" Audio Out : "+totalout)
                 else:
                     audio = "N/A"
             except:
                 audio = "N/A"
-            print(video,"   ",audio)
+            msg = (
+                   time.asctime()
+                   +" Loss Stats for "
+                   +hostname
+                   +"    Video Loss: "
+                   +video
+                   +"  Audio Loss: "
+                   +audio
+                  )
             print(msg)
 
         elif intent == "getLast":
@@ -385,13 +483,15 @@ def intent(object, webhook):
                 print (msg)
 
         else:
-            msg = "I don't know that action"
+            msg = (time.asctime()+" E   I don't know that action")
             print(msg)
 
         print (time.asctime(),"      POSTing msg to Webex Teams      ->  "+msg)
-        print (time.asctime(),"      POSTing to teams space id       ->  "+webhook['data']['roomId'])
+        print (time.asctime(),"      POSTing to teams space id       ->  "
+               +webhook['data']['roomId'])
         try:
-            sendSparkPOST("https://api.ciscospark.com/v1/messages", {"roomId": webhook['data']['roomId'], "text": msg})
+            sendSparkPOST("https://api.ciscospark.com/v1/messages",
+                          {"roomId": webhook['data']['roomId'], "text": msg})
         except:
             print (time.asctime(),"      Failed sending to Webex   ->  ")
     return
