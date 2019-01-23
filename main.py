@@ -194,7 +194,7 @@ def intent(action, webhook):
                   "Here are the actions supported by QuickCheck:\n" \
                   "help - This help menu\n" \
                   "list - print endpoints from endpoints.json list.\n" \
-                  "getStatus - Currently provides Standby Status.\n" \
+                  "getStatus - Shows current call status.\n" \
                   "getDiags - List any diagnostic alerts. \n" \
                   "getVersion - List current software version.\n" \
                   "sipStatus - List SIP registration Status.\n" \
@@ -237,32 +237,62 @@ def intent(action, webhook):
 
         elif intent == "getstatus":
 
-            url = 'https://{}/getxml?location=/Status/Standby'.format(host)
-
+            url = 'https://{}/getxml?location=/Status/Call'.format(host)
+            # If the unit is on a call, it will answer to this call
             try:
-                response = getCodecXML(
-                                       host,
-                                       codec_username,
-                                       codec_password,
-                                       url
-                                       ).xpath('//Status/Standby/State/text()')[0]
+                response = requests.get(url, verify=False, timeout=2, auth=(codec_username, codec_password))
+                xml_dict = xmltodict.parse(response.content)
+                connected = xml_dict["Status"]["Call"]["Status"]
+                calledParty = xml_dict["Status"]["Call"]["DisplayName"]
+                callType = xml_dict["Status"]["Call"]["CallType"]
+                direction = xml_dict["Status"]["Call"]["Direction"]
+                duration = xml_dict["Status"]["Call"]["Duration"]
+                rcvRate = xml_dict["Status"]["Call"]["ReceiveCallRate"]
+                sendRate = xml_dict["Status"]["Call"]["TransmitCallRate"]
+
+
                 msg = (time.asctime()
-                       +"    Standby status of "
+                       +"    "
                        +hostname
-                       +" at "
-                       +hostLocation
-                       +" is: "
-                       +response
+                       +" has been on a "
+                       +direction
+                       +" "
+                       +callType
+                       +" call for "
+                       +duration
+                       +" seconds with "
+                       +calledParty
+                       +" currently TX "
+                       +sendRate
+                       +"Mbps and Rcv "
+                       +rcvRate
+                       +"Mbps"
                        )
-                print(msg)
+
+            #If the unit is not on a call it will answer with this call
             except:
-                msg = (time.asctime()
-                      +" -  Can't reach "
-                      +hostname
-                      +" at addr: "
-                      +host
-                      +" to determine Standby Status"
-                      )
+                url = 'https://{}/getxml?location=/Status/SIP'.format(host)
+                try:
+                    response = requests.get(url, verify=False, timeout=2, auth=(codec_username, codec_password))
+                    xml_dict = xmltodict.parse(response.content)
+                    registered = xml_dict["Status"]["SIP"]["Registration"]["Status"]
+                    if registered == "Registered":
+                        msg = (time.asctime()
+                               +"   "
+                               +host
+                               +" is SIP registered and not currently on a call"
+                        )
+
+
+                except:
+                    msg = (time.asctime()
+                           +" -  Can't reach "
+                           +hostname
+                           +" at addr: "
+                           +host
+                           +" to determine Status"
+                           )
+            print(msg)
 
         elif intent == "list":
             msg = (time.asctime()

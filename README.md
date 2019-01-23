@@ -22,7 +22,7 @@ There are many fine tools for managing Cisco Video Endpoints that do so much mor
 Here are the actions supported by QuickCheck:
 - **help** - This help menu
 - **list** - print endpoints from [endpoints.json](./endpoints.json) list.
-- **getStatus** - Currently provides Standby Status.
+- **getStatus** - Provides Current Call Status.
 - **getDiags** - List any diagnostic alerts.
 - **getVersion** - List current software version.
 - **sipStatus** - List SIP registration Status.
@@ -32,7 +32,7 @@ Here are the actions supported by QuickCheck:
 
 ## Technologies & Frameworks Used
 
-This is Cisco Sample Code was written in Python3. We use the Atom application on Apple Macbook Pro computer to write and maintain the code.  
+This is Cisco Sample Code written in Python3. We use the Atom application on Apple Macbook Pro computer to write and maintain the code.  
 
 The three of us are in a group called "tag-team" on github and use github as the central repository for this code.  (Atom has simple git and github actions built in which make it easier to code together)
 
@@ -45,11 +45,6 @@ Our github repository is publicly available at https://github.com/CiscoSE/QuickC
 
 - This Cisco Webex Teams bot uses Webex Teams API to send/receive JSON formatted webhooks.  The bot also sends/receives XML formatted xAPI commands to/from Cisco CE code based Video Endpoints.
 
-
-## Usage
-
-
-
 ## Installation
 
 **Please Note:** This code is written for **Python 3**... if you have a Mac, it comes with **Python 2**... you will need to upgrade to Python 3 or do a whole lot of changes to many of the methods for it to work.
@@ -58,12 +53,14 @@ Our github repository is publicly available at https://github.com/CiscoSE/QuickC
   - Create a webex teams bot - I created QC@webex.bot starting from the "How to create a webex teams bot (using python)":
   https://developer.webex.com/blog/spark-bot-demo
   - Invite your bot to a webex teams space or 1-1 direct space.
+
   - Create a webex teams webhook that will listen for messages to your bot and forward them to a public address for your bot handling app.(this app)
     HowTo:
   - Get an account on ngrok which gives you a tunnel from ngrok to your laptop and a public address at ngrok for your webhook to send http messages to.  *** ngrok is sometimes considered a security risk by corporate security services, so check with IT before loading ngrok client on your laptop.
+
     - Launch ngrok client on laptop
-- Edit endpoints.json file to include endpoints you want to manage.
-- Edit config.txt with your names and bearer tokens and **save the file as config.json**
+- **Edit endpoints.json** file to include endpoints you want to manage.
+- **Edit config.txt** with your names and bearer tokens and **save the file as config.json**
 - Run main.py from terminal on laptop
     main.py will
       - launch local HTTP server on port 10010
