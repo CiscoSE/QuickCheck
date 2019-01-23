@@ -1,6 +1,6 @@
 {"HOST_NAME":"localhost",
-"PORT_NUMBER":"10010",
-"BOT_BEARER":"OGRhMjhjNWMtNDExNS00YzU2LTg1ODItMjgwYzkzMjEyMDU1NTA2ZjY0NjktZDBh_PF84_1eb65fdf-9643-417f-9974-ad72cae0e10f",
-"BOT_EMAIL":"qc@webex.bot",
-"BOT_NAME":"QC"
+"PORT_NUMBER":"your ngrok http port number i.e. 10010",
+"BOT_BEARER":"your bots bearer token",
+"BOT_EMAIL":"your bots email address",
+"BOT_NAME":"your bots name"
 }
