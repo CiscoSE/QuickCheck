@@ -59,7 +59,7 @@ Our github repository is publicly available at https://github.com/CiscoSE/QuickC
   - Get an account on ngrok which gives you a tunnel from ngrok to your laptop and a public address at ngrok for your webhook to send http messages to.  *** ngrok is sometimes considered a security risk by corporate security services, so check with IT before loading ngrok client on your laptop.
 
     - Launch ngrok client on laptop
-- **Edit endpoints.json** file to include endpoints you want to manage.
+- **Edit endpoints.txt** file to include endpoints you want to manage and **save the file as endpoints.json**.
 - **Edit config.txt** with your names and bearer tokens and **save the file as config.json**
 - Run main.py from terminal on laptop
     main.py will
