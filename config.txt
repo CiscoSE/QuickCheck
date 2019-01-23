@@ -1,0 +1,6 @@
+{"HOST_NAME":"localhost",
+"PORT_NUMBER":"your ngrok http port number. ie 10010",
+"BOT_BEARER":"your bots bearer token",
+"BOT_EMAIL":"your bots email address ie qc@webex.bot",
+"BOT_NAME":"your bots name ie QC"
+}
