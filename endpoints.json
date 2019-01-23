@@ -1,17 +1,17 @@
 {"endpoint":[
-  { "name":"Cisco Berry Farms",
-    "location":"Kellers DX80 Cisco Office",
-    "ipv4addr":"10.150.183.57",
-    "type":"DX80",
-    "admin":"kelmcbri",
-    "password":"C1sc0123"
+  { "name”:”<<Your Device Name>>“,
+    "location”:”<<Your device Location>>“,
+    "ipv4addr”:”<<Your device IP Address“,
+    "type”:”<<Your Device Type”,
+    "admin”:”<<Your Device Admin Name>>“,
+    "password”:”<<Your Device Admin Password>>“
   },
-  { "name":"MX800 Test",
-    "location":"Kellers MX800 on webex sandbox at home office",
-    "ipv4addr":"<<your endpoint IP>>",
-    "type":"MX800",
-    "admin":"<<your endpoint admin>>",
-    "password":"<<your endpoint password>>"
+  { "name”:”<<Your Device Name>>“,
+    "location”:”<<Your device Location>>“,
+    "ipv4addr”:”<<Your device IP Address“,
+    "type”:”<<Your Device Type”,
+    "admin”:”<<Your Device Admin Name>>“,
+    "password”:”<<Your Device Admin Password>>“
   }
  ]
 }

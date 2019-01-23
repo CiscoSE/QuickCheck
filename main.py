@@ -36,10 +36,10 @@ from lxml import etree
 # BOT_EMAIL is your Bot's email address i.e. qc@webex.bot
 # BOT_NAME is the case sensitive name you gave your Bot. i.e. QC
 HOST_NAME = 'localhost'
-PORT_NUMBER = 10010
-BOT_BEARER = "MmQzY2ZjOWItNTkxNS00ZDczLWExZTUtY2U5ZGExNGFmMDA0YTM5NjdmNTAtOGU1_PF84_1eb65fdf-9643-417f-9974-ad72cae0e10f"
-BOT_EMAIL = "qc@webex.bot"
-BOT_NAME = "QC"
+PORT_NUMBER = <<your ngrok tunnel port>>
+BOT_BEARER = “<<Your Bots Bearer token>>f"
+BOT_EMAIL = “<<Your Bots Email Address>>“
+BOT_NAME = “<<Your Bots case sensitive name>>“
 
 ngrok_tunnel = " "
 ngrok_port = " "
@@ -396,7 +396,7 @@ def intent(action, webhook):
                                 if (totalout > 5):
                                     video = "Yes"
                             except:
-                                print("There wasn't a field for netstat")        
+                                print("There wasn't a field for netstat")
                     print("\n\n Video IN : "+str(totalin)+" Video Out : "+str(totalout))
 
             else:
