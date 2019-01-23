@@ -42,8 +42,8 @@ This is Cisco Sample Code!  What Cisco and third-party technologies are you work
 
 **Cisco Products & Services:**
 
-- Product
-- Service
+- This Cisco Webex Teams bot uses Webex Teams API to send/receive JSON formatted webhooks.  The bot also sends/receives XML formatted xAPI commands to/from Cisco CE code based Video Endpoints.
+
 
 **Third-Party Products & Services:**
 
@@ -61,25 +61,25 @@ If people like your project, they will want to use it.  Show them how.
 
 ## Installation
 
-Provide a step-by-step series of examples and explanations for how to install your project and its dependencies.
-
 This code is written for **Python 3**... if you have a Mac, it comes with **Python 2**... you will need to upgrade to Python 3 or do a whole lot of changes to many of the methods for it to work.
 
 ### Pre-Requisites for QuickCheck ###
   - Create a webex teams bot - I created QC@webex.bot starting from the "How to create a webex teams bot (using python)":
   https://developer.webex.com/blog/spark-bot-demo
-  - Invite your bot to a webex teams space
+  - Invite your bot to a webex teams space or 1-1 direct space.
   - Create a webex teams webhook that will listen for messages to your bot and forward them to a public address for your bot handling app.(this app)
     HowTo:
   - Get an account on ngrok which gives you a tunnel from ngrok to your laptop and a public address at ngrok for your webhook to send http messages to.  *** ngrok is sometimes considered a security risk by corporate security services, so check with IT before loading ngrok client on your laptop.
     - Launch ngrok client on laptop
 - Edit endpoints.json file to include endpoints you want to manage.
+- Edit config.json with your names and bearer tokens
 - Run main.py from terminal on laptop
     main.py will
       - launch local HTTP server on port 10010
-        (You can change port number in main.py/global variables)
+        (You can change port number in config.json)
       - check your local ngrok client and get public uri
       - edit your webex teams webhook with current ngrok target
+     - HTTP server will then wait for incoming webhooks and send them to the intent method for action.
 
 ## Useful links
 - **Edit Webex Teams Webhook:**  https://developer.webex.com/my-apps/

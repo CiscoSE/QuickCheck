@@ -36,11 +36,7 @@ from lxml import etree
 # BOT_BEARER is your Bot's Bearer Authentication
 # BOT_EMAIL is your Bot's email address i.e. qc@webex.bot
 # BOT_NAME is the case sensitive name you gave your Bot. i.e. QC
-#HOST_NAME = 'localhost'
-#PORT_NUMBER = 10010
-#BOT_BEARER = 'OGRhMjhjNWMtNDExNS00YzU2LTg1ODItMjgwYzkzMjEyMDU1NTA2ZjY0NjktZDBh_PF84_1eb65fdf-9643-417f-9974-ad72cae0e10f'
-#BOT_EMAIL = 'qc@webex.bot'
-#BOT_NAME = "QC"
+
 ngrok_tunnel = " "
 ngrok_port = " "
 
