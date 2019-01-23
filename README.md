@@ -1,6 +1,7 @@
-# QC QuickCheck
+# QuickCheck
+![Alt text](/images/qclogo512x512_icon.png?raw=true )
 
-* Webex Teams Bot to perform Quick Check of Cisco CE endpoints *
+** A Webex Teams Bot to perform Quick Check of Cisco CE endpoints **
 
 ---
 
@@ -38,30 +39,27 @@ Here are the actions supported by QuickCheck:
 
 ## Technologies & Frameworks Used
 
-This is Cisco Sample Code!  What Cisco and third-party technologies are you working with?  Are you using a coding framework or software stack?  A simple list will set the context for your project.
+This is Cisco Sample Code was written in Python3. We use the Atom application on Apple Macbook Pro computer to write and maintain the code.  
+
+The three of us are in a group called "tag-team" on github and use github as the central repository for this code.  (Atom has simple git and github actions built in which make it easier to code together)
+
+Our github repository is publicly available at https://github.com/CiscoSE/QuickCheck.git
+
+
+
 
 **Cisco Products & Services:**
 
 - This Cisco Webex Teams bot uses Webex Teams API to send/receive JSON formatted webhooks.  The bot also sends/receives XML formatted xAPI commands to/from Cisco CE code based Video Endpoints.
 
 
-**Third-Party Products & Services:**
-
-- Product
-- Service
-
-**Tools & Frameworks:**
-
-- Framework 1
-- Automation Tool 2
-
 ## Usage
 
-If people like your project, they will want to use it.  Show them how.
+
 
 ## Installation
 
-This code is written for **Python 3**... if you have a Mac, it comes with **Python 2**... you will need to upgrade to Python 3 or do a whole lot of changes to many of the methods for it to work.
+**Please Note:** This code is written for **Python 3**... if you have a Mac, it comes with **Python 2**... you will need to upgrade to Python 3 or do a whole lot of changes to many of the methods for it to work.
 
 ### Pre-Requisites for QuickCheck ###
   - Create a webex teams bot - I created QC@webex.bot starting from the "How to create a webex teams bot (using python)":
@@ -72,7 +70,7 @@ This code is written for **Python 3**... if you have a Mac, it comes with **Pyth
   - Get an account on ngrok which gives you a tunnel from ngrok to your laptop and a public address at ngrok for your webhook to send http messages to.  *** ngrok is sometimes considered a security risk by corporate security services, so check with IT before loading ngrok client on your laptop.
     - Launch ngrok client on laptop
 - Edit endpoints.json file to include endpoints you want to manage.
-- Edit config.json with your names and bearer tokens
+- Edit config.txt with your names and bearer tokens and **save the file as config.json**
 - Run main.py from terminal on laptop
     main.py will
       - launch local HTTP server on port 10010
@@ -85,7 +83,8 @@ This code is written for **Python 3**... if you have a Mac, it comes with **Pyth
 - **Edit Webex Teams Webhook:**  https://developer.webex.com/my-apps/
 - **How to Create a Webex Teams Bot**  https://developer.webex.com/blog/spark-bot-demo
 - **ngrok dashboard**  https://dashboard.ngrok.com/status
-
+- **Our QuickCheck github repository** https://github.com/CiscoSE/QuickCheck.git
+- **Sfartz Postman Collection** https://github.com/CiscoDevNet/postman-xapi
 
 
 ## Authors & Maintainers
