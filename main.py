@@ -194,7 +194,7 @@ def intent(action, webhook):
                   "Here are the actions supported by QuickCheck:\n" \
                   "help - This help menu\n" \
                   "list - print endpoints from endpoints.json list.\n" \
-                  "getStatus - Shows current call status.\n" \
+                  "callStatus - Shows current call status.\n" \
                   "getDiags - List any diagnostic alerts. \n" \
                   "getVersion - List current software version.\n" \
                   "sipStatus - List SIP registration Status.\n" \
@@ -235,7 +235,7 @@ def intent(action, webhook):
 
             return
 
-        elif intent == "getstatus":
+        elif intent == "callstatus":
 
             url = 'https://{}/getxml?location=/Status/Call'.format(host)
             # If the unit is on a call, it will answer to this call
@@ -396,63 +396,63 @@ def intent(action, webhook):
             url = 'https://{}/getxml?location=/Status/MediaChannels'.format(host)
             video = "No"
             audio = "No"
-            #try:
-            response = requests.get(url, verify=False, timeout=2, auth=(codec_username, codec_password))
-            xml_dict = xmltodict.parse(response.content)
-            #print(xml_dict)
-            #except:
-                #video = "N/A"
-                #audio = "N/A"
-                #msg = (
-                       #time.asctime()
-                       #+" Loss Stats for "
-                       #+hostname
-                       #+"    Video Loss: "
-                       #+video
-                       #+"  Audio Loss: "
-                       #+audio
-                      #)
-                #return video, audio
-            #try:
-            check = xml_dict["Status"]["MediaChannels"]
-            if check != "None":
-                totalin = 0
-                totalout = 0
-                channels = xml_dict["Status"]["MediaChannels"]["Call"]["Channel"]
-                for channel in channels:
-                    print(channel)
-                    if "Video" in channel.keys() and channel["Video"]["ChannelRole"] == "Main":
-                        direction = channel["Direction"]
-                        print("The DIRECTION is :"+direction)
-                        if direction == "Incoming":
-                            lossin = float(channel["Netstat"]["Loss"])
-                            pksin = float(channel["Netstat"]["Packets"])
-                            print("lossin is : "+str(lossin))
-                            if lossin == 0:
-                                totalin = 0
-                            else:
-                                totalin = (lossin/pksin)* 100
-                            if (totalin > 5):
-                                    video = "Yes"
-                        else:
-                            try:
-                                lossout = float(channel["Netstat"]["Loss"])
-                                pksout = float(channel["Netstat"]["Packets"])
-
-                                if lossout == 0:
-                                    totalout = 0
-                                else:
-                                    totalout = (lossout / pksout) * 100
-                                if (totalout > 5):
-                                    video = "Yes"
-                            except:
-                                print("There wasn't a field for netstat")
-                    print("\n\n Video IN : "+str(totalin)+" Video Out : "+str(totalout))
-
-            else:
+            try:
+                response = requests.get(url, verify=False, timeout=2, auth=(codec_username, codec_password))
+                xml_dict = xmltodict.parse(response.content)
+                #print(xml_dict)
+            except:
                 video = "N/A"
-            #except:
-                #video = "N/A"
+                audio = "N/A"
+                msg = (
+                       time.asctime()
+                       +" Loss Stats for "
+                       +hostname
+                       +"    Video Loss: "
+                       +video
+                       +"  Audio Loss: "
+                       +audio
+                      )
+                return video, audio
+            try:
+                check = xml_dict["Status"]["MediaChannels"]
+                if check != "None":
+                    totalin = 0
+                    totalout = 0
+                    channels = xml_dict["Status"]["MediaChannels"]["Call"]["Channel"]
+                    for channel in channels:
+                        #print(channel)
+                        if "Video" in channel.keys() and channel["Video"]["ChannelRole"] == "Main":
+                            direction = channel["Direction"]
+                            print("The DIRECTION is :"+direction)
+                            if direction == "Incoming":
+                                lossin = float(channel["Netstat"]["Loss"])
+                                pksin = float(channel["Netstat"]["Packets"])
+                                #print("lossin is : "+str(lossin))
+                                if lossin == 0:
+                                    totalin = 0
+                                else:
+                                    totalin = (lossin/pksin)* 100
+                                if (totalin > 5):
+                                    video = "Yes"
+                            else:
+                                try:
+                                    lossout = float(channel["Netstat"]["Loss"])
+                                    pksout = float(channel["Netstat"]["Packets"])
+
+                                    if lossout == 0:
+                                        totalout = 0
+                                    else:
+                                        totalout = (lossout / pksout) * 100
+                                        if (totalout > 5):
+                                            video = "Yes"
+                                except:
+                                    print("There wasn't a field for netstat")
+                        print("\n\n Video IN : "+str(totalin)+" Video Out : "+str(totalout))
+
+                else:
+                    video = "N/A"
+            except:
+                video = "N/A"
             try:
                 check = xml_dict["Status"]["MediaChannels"]
                 if check != "None":
@@ -529,7 +529,13 @@ def intent(action, webhook):
                 msg = "Last Call Hostname: {}\n\t Host: {}\n\tRemote#: {}\n\tRemoteName: {}\n\tDirection: {}\n\tProtocol: {}\n\tCallType: {}\n\tSeconds: {}\n\tRequestedType: {}\n\tStart: {}\n\tEnd: {} ".format(hostname, host ,RemoteNumber,DisplayName,Direction,Protocol,CallType,Seconds,ReqCallType,StartTime,EndTime)
 
             except:
-                msg = ("Failed getting Last Call Info for "+hostname+" at "+host)
+                msg = (time.asctime()
+                       +"    Failed getting Last Call Info for "
+                       +hostname
+                       +" at "
+                       +host
+                       )
+                       
                 print (msg)
 
         else:
