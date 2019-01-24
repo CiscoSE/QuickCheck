@@ -1,6 +1,14 @@
+# Don't publish a users particular config.json or endpoints.json so you
+#  don't expose their information to others.
 config.json
 endpoints.json
+
+# Users may or may not be using pip and python virtual environments so
+#  hide related files
 pyvenv.cfg
 pip-selfcheck.json
 /bin
 /lib
+
+# Don't publish temporary files
+~$QCPreso.pptx

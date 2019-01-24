@@ -252,7 +252,7 @@ def intent(action, webhook):
 
 
                 msg = (time.asctime()
-                       +"    "
+                       +"\n    "
                        +hostname
                        +" has been on a "
                        +direction
@@ -264,9 +264,9 @@ def intent(action, webhook):
                        +calledParty
                        +" currently TX "
                        +sendRate
-                       +"Mbps and Rcv "
+                       +" bps and Rcv "
                        +rcvRate
-                       +"Mbps"
+                       +" bps"
                        )
 
             #If the unit is not on a call it will answer with this call
@@ -314,6 +314,7 @@ def intent(action, webhook):
                 #How many diagnostic items are there
                 tablecont = response.xpath('//Status/Diagnostics/Message/Description/text()')
                 tablelen = len(tablecont)
+                # Case where there are no diags found
                 if tablelen == 0:
                     msg = (time.asctime()
                           +" - Diagnostic Messages "
@@ -324,12 +325,14 @@ def intent(action, webhook):
                           )
                     print(msg)
                 else:
+                # One or more diags were found
                     for x in range(0,tablelen):
                         x = int(x)
                         diags = diags+("\n\t"+response.xpath('//Status/Diagnostics/Message/Description/text()')[x])
-                        msg = (time.asctime()+" - Diagnostic Messages "+hostname+" at "+hostLocation+" are:"+diags)
+                        msg = (time.asctime()+" - Diagnostic Messages "+hostname+" at "+hostLocation+" are:\n"+diags)
                         print(msg)
             except:
+                # Can't reach the endpoint to query it
                 msg = (time.asctime()
                       +" E  Can't reach "
                       +hostname
@@ -535,7 +538,7 @@ def intent(action, webhook):
                        +" at "
                        +host
                        )
-                       
+
                 print (msg)
 
         else:
@@ -570,6 +573,7 @@ def loadEndpoints():
 
     # show values
     for x in endpoints["endpoint"]:
+        print ("\n")
         print ("Name          : "+x["name"])
         print ("Location      : "+x["location"])
         print ("IP v4 Address : "+x["ipv4addr"])
