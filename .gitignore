@@ -1,6 +1,6 @@
 config.json
 endpoints.json
 pyvenv.cfg
-pip-selfcheck.cfg
+pip-selfcheck.json
 /bin
 /lib
