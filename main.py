@@ -188,52 +188,54 @@ def intent(action, webhook):
         mode = getMode(host,hostname,codec_username,codec_password)
 
         # Act on intent/Action
-        if intent ==   "help":
-            msg = "Welcome to QuickCheck\n" \
-                  "\n" \
-                  "Here are the actions supported by QuickCheck:\n" \
-                  "help - This help menu\n" \
-                  "list - print endpoints from endpoints.json list.\n" \
-                  "callStatus - Shows current call status.\n" \
-                  "getDiags - List any diagnostic alerts. \n" \
-                  "getVersion - List current software version.\n" \
-                  "sipStatus - List SIP registration Status.\n" \
-                  "getLoss - List Packet Loss values.\n" \
-                  "getLast - List Last Call Details.\n" \
-                  "getPeople - List number of people in room.\n"
-            print (time.asctime(),
-                     "      POSTing msg to Webex Teams      ->  "
-                     +msg
-                     )
-            print (time.asctime(),
-                     "      POSTing to teams space id       ->  "
-                     +webhook['data']['roomId']
-                     )
-            try:
-                sendSparkPOST("https://api.ciscospark.com/v1/messages",
-                                {
-                                "roomId": webhook['data']['roomId'],
-                                "text": msg
-                                }
+
+        if intent == "getpeople":
+            # If the unit is on-prem registered, use this API call
+            if mode == "CUCM":
+                msg = (time.asctime()
+                       +"    "
+                       +hostname
+                       +" is registered to "
+                       +mode
+                       +" : Not currently supported by People API"
+                      )
+                print (msg)
+            # If the unit is registered to the cloud use this API call
+            elif mode == "Webex":
+                url = 'https://{}/getxml?location=/Status/RoomAnalytics/PeopleCount/Current'.format(host)
+
+                try:
+                    response = getCodecXML(
+                                      host,
+                                      codec_username,
+                                      codec_password,
+                                      url
+                                      ).xpath('///Status/RoomAnalytics/PeopleCount/Current/text()')[0]
+                    if response == "-1":
+                        msg = (time.asctime()
+                               +"    "
+                               +hostname
+                               +" : Not currently enabled for PeopleCount"
                               )
-            except:
-                print (time.asctime(),"      Failed sending to Webex   ->  ")
-            return
+                        print (msg)
+                    else:
+                        msg = (time.asctime()
+                               +"    There are currently "
+                               +response
+                               +" people in room :"
+                               +hostname
+                              )
+                        print (msg)
 
-        elif intent == "getpeople":
-            msg = (time.asctime()+"      Still coding getPeople method.")
-            print(msg)
-            try:
-                sendSparkPOST("https://api.ciscospark.com/v1/messages",
-                                {
-                                "roomId": webhook['data']['roomId'],
-                                "text": msg
-                                }
-                             )
-            except:
-                print (time.asctime()," E    Failed sending to Webex   ->  ")
-
-            return
+                except:
+                    msg = (time.asctime()
+                      +" E  Can't reach "
+                      +hostname
+                      +" at addr: "
+                      +host
+                      +" to get people count"
+                      )
+                    print(msg)
 
         elif intent == "callstatus":
 
@@ -341,59 +343,116 @@ def intent(action, webhook):
                       +" to determine Diags.")
 
         elif intent == "getversion":
+            # If the unit is on-prem registered, use this API call
+            if mode == "CUCM":
+                url = 'https://{}/getxml?location=/Status/Provisioning/Software/Current'.format(host)
 
-            url = 'https://{}/getxml?location=/Status/Provisioning/Software/Current'.format(host)
-
-            try:
-                response = getCodecXML(
+                try:
+                    response = getCodecXML(
                                       host,
                                       codec_username,
                                       codec_password,
                                       url
                                       ).xpath('//Status/Provisioning/Software/Current/VersionId/text()')[0]
-                msg = (time.asctime()
-                       +"    CE Version running on "
-                       +hostname
-                       +" at "
-                       +hostLocation
-                       +" is: "
-                       +response
-                       )
-                print(msg)
-            except:
-                msg = (time.asctime()
-                       +" E  Can't reach "
-                       +hostname
-                       +" at addr: "
-                       +host
-                       +" to get version"
+                    msg = (time.asctime()
+                           +"    "
+                           +hostname
+                           +"  is running : "
+                           +response
+                           +" code and registered to "
+                           +mode
+                          )
+                    print(msg)
+                except:
+                    msg = (time.asctime()
+                           +" E  Can't reach "
+                           +hostname
+                           +" at addr: "
+                           +host
+                           +" to get version"
+                          )
+                    print (msg)
+            # If the unit is registered to the cloud use this API call
+            elif mode == "Webex":
+                url = 'https://{}/getxml?location=/Status/SystemUnit/Software/DisplayName'.format(host)
+
+                try:
+                    response = requests.get(url, verify=False, timeout=2, auth=(codec_username, codec_password))
+                    xmlstr = response.content
+                    root = etree.fromstring(xmlstr)
+                    status = root.xpath('///Status/SystemUnit/Software/DisplayName/text()')[0]
+                    msg = (time.asctime()
+                           +"    "
+                           +hostname
+                           +"  is running : "
+                           +status
+                           +" code and registered to "
+                           +mode
+                          )
+                    print (msg)
+                except:
+                    msg = (time.asctime()
+                      +" E  Can't reach "
+                      +hostname
+                      +" at addr: "
+                      +host
+                      +" to determine Cloud Software Version"
                       )
+                    print(msg)
 
         elif intent == "sipstatus":
+            # If the unit is on-prem registered, use this API call
+            if mode == "CUCM":
+                url = 'https://{}/getxml?location=/Status/SIP/Registration'.format(host)
 
-            url = 'https://{}/getxml?location=/Status/SIP/Registration'.format(host)
-            try:
-                response = requests.get(url, verify=False, timeout=2, auth=(codec_username, codec_password))
-                xmlstr = response.content
-                root = etree.fromstring(xmlstr)
-                status = root.xpath('//Status/SIP/Registration/Status/text()')[0]
-                msg = (time.asctime()
-                      +"    "
-                      +hostname
-                      +" Sip Registration Status is: **"
-                      +status
-                      +"**"
-                      )
-            except:
-                msg = (time.asctime()
+                try:
+                    response = requests.get(url, verify=False, timeout=2, auth=(codec_username, codec_password))
+                    xmlstr = response.content
+                    root = etree.fromstring(xmlstr)
+                    status = root.xpath('//Status/SIP/Registration/Status/text()')[0]
+                    msg = (time.asctime()
+                           +"    "
+                           +hostname
+                           +" Sip Registration Status is: **"
+                           +status
+                           +"** to: "
+                           +mode
+                          )
+                except:
+                    msg = (time.asctime()
                       +" E  Can't reach "
                       +hostname
                       +" at addr: "
                       +host
                       +" to determine SIP Registration Status"
                       )
-                print(msg)
-                #sendSparkPOST("https://api.ciscospark.com/v1/messages", {"roomId": webhook['data']['roomId'], "text": msg})
+                    print(msg)
+            # If the unit is registered to the cloud use this API call
+            elif mode == "Webex":
+                url = 'https://{}/getxml?location=/Status/Provisioning/Status'.format(host)
+
+                try:
+                    response = requests.get(url, verify=False, timeout=2, auth=(codec_username, codec_password))
+                    xmlstr = response.content
+                    root = etree.fromstring(xmlstr)
+                    status = root.xpath('//Status/Provisioning/Status/text()')[0]
+                    msg = (time.asctime()
+                           +"    "
+                           +hostname
+                           +"  Cloud Registered Status is: **"
+                           +status
+                           +"** to: "
+                           +mode
+                          )
+                except:
+                    msg = (time.asctime()
+                      +" E  Can't reach "
+                      +hostname
+                      +" at addr: "
+                      +host
+                      +" to determine Cloud Registration Status"
+                      )
+                    print(msg)
 
         elif intent == "getloss":
             url = 'https://{}/getxml?location=/Status/MediaChannels'.format(host)
@@ -541,19 +600,100 @@ def intent(action, webhook):
 
                 print (msg)
 
-        else:
-            msg = (time.asctime()+" E   I don't know that action")
-            print(msg)
+        elif intent == "getnumber":
+            """
+            getNumber returns phone numbers of endpoint
+            """
+            url = 'https://{}/getxml?location=/Status/UserInterface/ContactInfo/ContactMethod'.format(host)
+            number=""
+            #reponse holds all the numbers, must break out individual numbers
+            try:
+                response = getCodecXML(host,codec_username,codec_password,url)
+                #How many Numbers items are there
+                tablecont = response.xpath('//Status/UserInterface/ContactInfo/ContactMethod/Number/text()')
+                tablelen = len(tablecont)
+                # Case where there are no Numbers are found
+                if tablelen == 0:
+                    msg = (time.asctime()
+                          +" - Numbers "
+                          +hostname
+                          +" at "
+                          +hostLocation
+                          +" are: No Numbers Found"
+                          )
+                    print(msg)
+                else:
+                # One or more Numbers were found
+                    for x in range(0,tablelen):
+                        x = int(x)
+                        number = number+("\n\t"+response.xpath('/Status/UserInterface/ContactInfo/ContactMethod/Number/text()')[x])
+                        msg = (time.asctime()
+                               +"    "
+                               +hostname
+                               +" at "
+                               +hostLocation
+                               +" can be reached at :\n"
+                               +number
+                              )
+                        print(msg)
+            except:
+                # Can't reach the endpoint to query it
+                msg = (time.asctime()
+                      +" E  Can't reach "
+                      +hostname
+                      +" at addr: "
+                      +host
+                      +" to determine Numbers.")
+                print(msg)
 
-        print (time.asctime(),"      POSTing msg to Webex Teams      ->  "+msg)
-        print (time.asctime(),"      POSTing to teams space id       ->  "
-               +webhook['data']['roomId'])
+        else:
+            msg = "\n\n**Welcome to QuickCheck**\n\n" \
+                  "\n" \
+                  "Here are the actions supported by QuickCheck:  \n" \
+                  "  **help** - This help menu  \n" \
+                  "  **list** - print endpoints from endpoints.json list.  \n" \
+                  "  **callStatus** - Shows current call status.  \n" \
+                  "  **getDiags** - List any diagnostic alerts.  \n" \
+                  "  **getVersion** - List current software version.  \n" \
+                  "  **sipStatus** - List SIP registration Status.  \n" \
+                  "  **getLoss** - List Packet Loss values.  \n" \
+                  "  **getLast** - List Last Call Details.  \n" \
+                  "  **getPeople** - List number of people in room.  \n"\
+                  "  **getNumber** - Get Endpoint Numbers.  \n"
+
+            print (time.asctime(),
+                     "      POSTing msg to Webex Teams      ->  "
+                     +msg
+                     )
+            print (time.asctime(),
+                     "      POSTing to teams space id       ->  "
+                     +webhook['data']['roomId']
+                     )
+            #send to webex now instead of waiting till end of intent if
+            # statements or it will run once for each endpoint.:)
+            try:
+                sendSparkPOST("https://api.ciscospark.com/v1/messages",
+                             {
+                              "roomId": webhook['data']['roomId'],
+                              "markdown": msg
+                             }
+                             )
+            except:
+                print (time.asctime(),"      Failed sending to Webex   ->  ")
+            #return now so we don't run for every endpoint
+            return
+
+        # Take MSG generated in one of above intents and send to webex teams
         try:
             sendSparkPOST("https://api.ciscospark.com/v1/messages",
-                          {"roomId": webhook['data']['roomId'], "text": msg})
+                          {
+                           "roomId": webhook['data']['roomId'],
+                           "markdown": msg
+                          }
+                         )
         except:
             print (time.asctime(),"      Failed sending to Webex   ->  ")
-    return
+
 
 def loadEndpoints():
     """
