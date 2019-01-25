@@ -11,24 +11,22 @@ There are many fine tools for managing Cisco Video Endpoints that do so much mor
 
 ## Show Me!
 ![Alt text](/images/QC_Help.png?raw=true )
-### Ask **QuickCheck** for help!
-
-
 
 ## Features
 
-### Welcome to QuickCheck ###
+### **Welcome to QuickCheck** ###
 
 Here are the actions supported by QuickCheck:
-- **help** - This help menu
-- **list** - print endpoints from [endpoints.json](./endpoints.json) list.
-- **getStatus** - Provides Current Call Status.
-- **getDiags** - List any diagnostic alerts.
-- **getVersion** - List current software version.
-- **sipStatus** - List SIP registration Status.
-- **getLoss** - List Packet Loss values.
-- **getLast** - List Last Call Details.
-- **getPeople** - List number of people in room.
+-  **help** - This help menu
+-  **list** - print endpoints from [endpoints.json](./endpoints.json) file.
+-  **callStatus** - Shows current call status.
+-  **getDiags** - List any diagnostic alerts.
+-  **getVersion** - List current software version.
+-  **sipStatus** - List SIP registration Status.
+-  **getLoss** - List Packet Loss values.
+-  **getLast** - List Last Call Details.
+-  **getPeople** - List number of people in room.
+-  **getNumber** - Get Endpoint Numbers.
 
 ## Technologies & Frameworks Used
 
@@ -59,10 +57,9 @@ Our github repository is publicly available at https://github.com/CiscoSE/QuickC
   - Get an account on ngrok which gives you a tunnel from ngrok to your laptop and a public address at ngrok for your webhook to send http messages to.  *** ngrok is sometimes considered a security risk by corporate security services, so check with IT before loading ngrok client on your laptop.
 
     - Launch ngrok client on laptop
-- **Edit endpoints.txt** file to include endpoints you want to manage and **save the file as endpoints.json**.
-- **Edit config.txt** with your names and bearer tokens and **save the file as config.json**
-- Run main.py from terminal on laptop
-    main.py will
+- **Edit [endpoints.txt](./endpoints.txt)** file to include endpoints you want to manage and **save the file as [endpoints.json](./endpoints.json)**.
+- **Edit [config.txt](./config.txt)** with your names and bearer tokens and **save the file as [config.json](config.json)**
+- Run [main.py](./main.py) from terminal on laptop and main.py will
       - launch local HTTP server on port 10010
         (You can change port number in config.json)
       - check your local ngrok client and get public uri
@@ -97,3 +94,9 @@ We pulled from Steve Sfartz Postman Collection Github Repository at https://gith
 
 This project is licensed to you under the terms of the [Cisco Sample
 Code License](./LICENSE).
+
+## Contributions
+Please see [Contributing](./CONTRIBUTiNG.md) to help contribute to this code.
+
+## Code of Conduct
+Contributors to this code agree with our Code of Conduct: [CODE_OF_CONDUCT](./CODE_OF_CONDUCT.md)
