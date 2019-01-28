@@ -6,6 +6,7 @@ endpoints.json
 # Users may or may not be using pip and python virtual environments so
 #  hide related files
 /include
+/include/__pycache__
 pyvenv.cfg
 pip-selfcheck.json
 /bin
