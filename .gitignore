@@ -7,7 +7,6 @@ endpoints.json
 #  hide related files
 /include
 /include/__pycache__
-/include/__pycache__/server.cpython-37.pyc
 pyvenv.cfg
 pip-selfcheck.json
 /bin
