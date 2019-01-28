@@ -192,14 +192,38 @@ def intent(action, webhook):
         if intent   == "getpeople":
             # If the unit is on-prem registered, use this API call
             if mode == "CUCM":
-                msg = (time.asctime()
-                       +"    "
-                       +hostname
-                       +" is registered to "
-                       +mode
-                       +" : Not currently supported by People API"
+                url = 'https://{}/getxml?location=/Status/RoomAnalytics/PeopleCount/Current'.format(host)
+
+                try:
+                    response = getCodecXML(
+                                      host,
+                                      codec_username,
+                                      codec_password,
+                                      url
+                                      ).xpath('///Status/RoomAnalytics/PeopleCount/Current/text()')[0]
+                    if response == "-1":
+                        msg = (time.asctime()
+                               +"    "
+                               +hostname
+                               +" : **Not currently enabled** for PeopleCount"
+                              )
+                        print (msg)
+                    else:
+                        msg = (time.asctime()
+                               +"    There are **currently "
+                               +response
+                               +" people** in room :"
+                               +hostname
+                              )
+                        print (msg)
+
+                except:
+                    msg = (time.asctime()
+                      +"    PeopleCount API **not available** on "
+                      +hostname
+                      +" Hardware"
                       )
-                print (msg)
+                    print(msg)
             # If the unit is registered to the cloud use this API call
             elif ((mode == "Webex") or (mode == "Auto")):
                 url = 'https://{}/getxml?location=/Status/RoomAnalytics/PeopleCount/Current'.format(host)
@@ -215,21 +239,21 @@ def intent(action, webhook):
                         msg = (time.asctime()
                                +"    "
                                +hostname
-                               +" : Not currently enabled for PeopleCount"
+                               +" : **Not currently enabled** for PeopleCount"
                               )
                         print (msg)
                     else:
                         msg = (time.asctime()
-                               +"    There are currently "
+                               +"    There are **currently "
                                +response
-                               +" people in room :"
+                               +" people** in room :"
                                +hostname
                               )
                         print (msg)
 
                 except:
                     msg = (time.asctime()
-                      +" E  Can't reach "
+                      +" E  **Can't reach** "
                       +hostname
                       +" at addr: "
                       +host
@@ -238,63 +262,87 @@ def intent(action, webhook):
                     print(msg)
 
         elif intent == "callstatus":
-
-            url = 'https://{}/getxml?location=/Status/Call'.format(host)
-            # If the unit is on a call, it will answer to this call
-            try:
-                response = requests.get(url, verify=False, timeout=2, auth=(codec_username, codec_password))
-                xml_dict = xmltodict.parse(response.content)
-                connected = xml_dict["Status"]["Call"]["Status"]
-                calledParty = xml_dict["Status"]["Call"]["DisplayName"]
-                callType = xml_dict["Status"]["Call"]["CallType"]
-                direction = xml_dict["Status"]["Call"]["Direction"]
-                duration = xml_dict["Status"]["Call"]["Duration"]
-                rcvRate = xml_dict["Status"]["Call"]["ReceiveCallRate"]
-                sendRate = xml_dict["Status"]["Call"]["TransmitCallRate"]
-
-
-                msg = (time.asctime()
-                       +"\n    "
-                       +hostname
-                       +" has been on a "
-                       +direction
-                       +" "
-                       +callType
-                       +" call for "
-                       +duration
-                       +" seconds with "
-                       +calledParty
-                       +" currently TX "
-                       +sendRate
-                       +" bps and Rcv "
-                       +rcvRate
-                       +" bps"
-                       )
-
-            #If the unit is not on a call it will answer with this call
-            except:
-                url = 'https://{}/getxml?location=/Status/SIP'.format(host)
+                url = 'https://{}/getxml?location=/Status/Call'.format(host)
+                # If the unit is on a call, it will answer to this call
                 try:
                     response = requests.get(url, verify=False, timeout=2, auth=(codec_username, codec_password))
                     xml_dict = xmltodict.parse(response.content)
-                    registered = xml_dict["Status"]["SIP"]["Registration"]["Status"]
-                    if registered == "Registered":
-                        msg = (time.asctime()
-                               +"   "
-                               +host
-                               +" is SIP registered and not currently on a call"
-                        )
+                    connected = xml_dict["Status"]["Call"]["Status"]
+                    calledParty = xml_dict["Status"]["Call"]["DisplayName"]
+                    callType = xml_dict["Status"]["Call"]["CallType"]
+                    direction = xml_dict["Status"]["Call"]["Direction"]
+                    duration = xml_dict["Status"]["Call"]["Duration"]
+                    rcvRate = xml_dict["Status"]["Call"]["ReceiveCallRate"]
+                    sendRate = xml_dict["Status"]["Call"]["TransmitCallRate"]
 
-
-                except:
                     msg = (time.asctime()
-                           +" E  Can't reach "
+                           +"\n    "
                            +hostname
-                           +" at addr: "
-                           +host
-                           +" to determine Status"
-                           )
-            print(msg)
+                           +" has been on a "
+                           +direction
+                           +" "
+                           +callType
+                           +" call for "
+                           +duration
+                           +" seconds with "
+                           +calledParty
+                           +" currently TX "
+                           +sendRate
+                           +" bps and Rcv "
+                           +rcvRate
+                           +" bps"
+                          )
+
+                #If the unit is not on a call it will answer with this call
+                except:
+                    #Check to see if unit is even registered
+                    if mode == "CUCM":
+                        url = 'https://{}/getxml?location=/Status/SIP'.format(host)
+                        try:
+                            response = requests.get(url, verify=False, timeout=2, auth=(codec_username, codec_password))
+                            xml_dict = xmltodict.parse(response.content)
+                            registered = xml_dict["Status"]["SIP"]["Registration"]["Status"]
+                            if registered == "Registered":
+                                msg = (time.asctime()
+                                       +"   "
+                                       +hostname
+                                       +" is SIP registered but **not currently on a call**."
+                                      )
+
+                        except:
+                            msg = (time.asctime()
+                                   +" E  Can't reach "
+                                   +hostname
+                                   +" at addr: "
+                                   +host
+                                   +" to determine Call Status"
+                                  )
+                    elif ((mode == "Webex") or (mode == "Auto")):
+                        url = 'https://{}/getxml?location=/Status/Provisioning/Status'.format(host)
+
+                        try:
+                            response = requests.get(url, verify=False, timeout=2, auth=(codec_username, codec_password))
+                            xmlstr = response.content
+                            root = etree.fromstring(xmlstr)
+                            status = root.xpath('//Status/Provisioning/Status/text()')[0]
+                            msg = (time.asctime()
+                                   +"    "
+                                   +hostname
+                                   +" is: "
+                                   +status
+                                   +" to: "
+                                   +mode
+                                   +" but **not currently on a call**."
+                                  )
+                        except:
+                            msg = (time.asctime()
+                                   +" E  Can't reach "
+                                   +hostname
+                                   +" at addr: "
+                                   +host
+                                   +" to determine Call Status"
+                                  )
+                print(msg)
 
         elif intent == "list":
             msg = (time.asctime()
@@ -421,8 +469,9 @@ def intent(action, webhook):
                            +hostname
                            +" Sip Registration Status is: **"
                            +status
-                           +"** to: "
+                           +" to: "
                            +mode
+                           +"**"
                           )
                 except:
                     msg = (time.asctime()
@@ -434,7 +483,7 @@ def intent(action, webhook):
                       )
                     print(msg)
             # If the unit is registered to the cloud use this API call
-            elif mode == "Webex":
+            elif ((mode == "Webex") or (mode == "Auto")):
                 url = 'https://{}/getxml?location=/Status/Provisioning/Status'.format(host)
 
                 try:
@@ -447,8 +496,9 @@ def intent(action, webhook):
                            +hostname
                            +"  Cloud Registered Status is: **"
                            +status
-                           +"** to: "
+                           +" to: "
                            +mode
+                           +"**"
                           )
                 except:
                     msg = (time.asctime()
@@ -594,7 +644,7 @@ def intent(action, webhook):
                 EndTime = infoXML.text
                 infoXML = root.xpath('//Command/CallHistoryRecentsResult/Entry/LastOccurrenceEndTime')[0]
 
-                msg = "Last Call Hostname: {}\n\t Host: {}\n\tRemote#: {}\n\tRemoteName: {}\n\tDirection: {}\n\tProtocol: {}\n\tCallType: {}\n\tSeconds: {}\n\tRequestedType: {}\n\tStart: {}\n\tEnd: {} ".format(hostname, host ,RemoteNumber,DisplayName,Direction,Protocol,CallType,Seconds,ReqCallType,StartTime,EndTime)
+                msg = "Last Call Hostname: {}\n\tHost: {}\n\tRemote#: {}\n\tRemoteName: {}\n\tDirection: {}\n\tProtocol: {}\n\tCallType: {}\n\tSeconds: {}\n\tRequestedType: {}\n\tStart: {}\n\tEnd: {} ".format(hostname, host ,RemoteNumber,DisplayName,Direction,Protocol,CallType,Seconds,ReqCallType,StartTime,EndTime)
 
             except:
                 msg = (time.asctime()
