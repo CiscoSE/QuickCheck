@@ -19,11 +19,11 @@ There are many fine tools for managing Cisco Video Endpoints that do so much mor
 Here are the actions supported by QuickCheck:
 -  **help** - This help menu
 -  **list** - print endpoints from [endpoints.json](./endpoints.json) file.
--  **callStatus** - Shows current call status.
+-  **callStatus** - Shows **current** call status.
 -  **getDiags** - List any diagnostic alerts.
 -  **getVersion** - List current software version.
 -  **sipStatus** - List SIP registration Status.
--  **getLoss** - List Packet Loss values.
+-  **getLoss** - List current Packet Loss values.
 -  **getLast** - List Last Call Details.
 -  **getPeople** - List number of people in room.
 -  **getNumber** - Get Endpoint Numbers.
@@ -48,7 +48,7 @@ Our github repository is publicly available at https://github.com/CiscoSE/QuickC
 **Please Note:** This code is written for **Python 3**... if you have a Mac, it comes with **Python 2**... you will need to upgrade to Python 3 or do a whole lot of changes to many of the methods for it to work.
 
 ### Pre-Requisites for QuickCheck ###
-  - Create a webex teams bot - I created QC@webex.bot starting from the "How to create a webex teams bot (using python)":
+  - Create a webex teams bot - We created QC@webex.bot starting from the "How to create a webex teams bot (using python)":
   https://developer.webex.com/blog/spark-bot-demo
   - Invite your bot to a webex teams space or 1-1 direct space.
 
@@ -88,7 +88,8 @@ The HTTP server code and the send get/post to webex teams methods were inspired 
 The original python 2 code for this tutorial can be found at "tahanson's" repository at https://github.com/webex/SparkBotDemo/blob/master/bot_demo.py
 
 
-We pulled from Steve Sfartz Postman Collection Github Repository at https://github.com/CiscoDevNet/postman-xapi to create actions/intents, i.e. commands you can execute with QuickCheck bot.
+We pulled from ObjectIsAdvantag / Steve Sfartz Postman Collection Github Repository at https://github.com/CiscoDevNet/postman-xapi to create actions/intents, i.e. commands against Telepresence Endpoints you can execute with QuickCheck bot.
+
 
 ## License
 

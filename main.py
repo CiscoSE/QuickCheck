@@ -189,7 +189,7 @@ def intent(action, webhook):
 
         # Act on intent/Action
 
-        if intent == "getpeople":
+        if intent   == "getpeople":
             # If the unit is on-prem registered, use this API call
             if mode == "CUCM":
                 msg = (time.asctime()
@@ -201,7 +201,7 @@ def intent(action, webhook):
                       )
                 print (msg)
             # If the unit is registered to the cloud use this API call
-            elif mode == "Webex":
+            elif ((mode == "Webex") or (mode == "Auto")):
                 url = 'https://{}/getxml?location=/Status/RoomAnalytics/PeopleCount/Current'.format(host)
 
                 try:
@@ -357,9 +357,9 @@ def intent(action, webhook):
                     msg = (time.asctime()
                            +"    "
                            +hostname
-                           +"  is running : "
+                           +"  is running : **"
                            +response
-                           +" code and registered to "
+                           +"** code and registered to "
                            +mode
                           )
                     print(msg)
@@ -373,7 +373,7 @@ def intent(action, webhook):
                           )
                     print (msg)
             # If the unit is registered to the cloud use this API call
-            elif mode == "Webex":
+            elif ((mode == "Webex") or (mode == "Auto")):
                 url = 'https://{}/getxml?location=/Status/SystemUnit/Software/DisplayName'.format(host)
 
                 try:
@@ -384,9 +384,9 @@ def intent(action, webhook):
                     msg = (time.asctime()
                            +"    "
                            +hostname
-                           +"  is running : "
+                           +"  is running : **"
                            +status
-                           +" code and registered to "
+                           +"** code and registered to "
                            +mode
                           )
                     print (msg)
@@ -399,6 +399,12 @@ def intent(action, webhook):
                       +" to determine Cloud Software Version"
                       )
                     print(msg)
+            else:
+                msg = (time.asctime()
+                  +" E  Unknown Mode "
+                  +mode
+                  )
+                print(msg)
 
         elif intent == "sipstatus":
             # If the unit is on-prem registered, use this API call
@@ -693,7 +699,6 @@ def intent(action, webhook):
                          )
         except:
             print (time.asctime(),"      Failed sending to Webex   ->  ")
-
 
 def loadEndpoints():
     """
