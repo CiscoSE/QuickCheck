@@ -82,6 +82,7 @@ People responsible for the creation and maintenance of this project:
 - Trey George <ergeorge@cisco.com>
 - Joe Bourne <jbourne@cisco.com>
 
+
 ## Credits
 
 The HTTP server code and the send get/post to webex teams methods were inspired by the code in the "How to create a webex teams bot" tutorial at:  https://developer.webex.com/blog/spark-bot-demo
