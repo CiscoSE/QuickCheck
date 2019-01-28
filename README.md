@@ -38,7 +38,6 @@ Our github repository is publicly available at https://github.com/CiscoSE/QuickC
 
 
 
-
 **Cisco Products & Services:**
 
 - This Cisco Webex Teams bot uses Webex Teams API to send/receive JSON formatted webhooks.  The bot also sends/receives XML formatted xAPI commands to/from Cisco CE code based Video Endpoints.
