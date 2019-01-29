@@ -76,6 +76,18 @@ def getMode(host,hostname,codec_username,codec_password):
     registered to the cloud vs those that are registered on-prem so
     this method determines if device is registered on-prem or cloud and
     returns the 'Mode' of CUCM or Webex
+    There are a few mode types that should be tracked because there Could
+    be different APIs for each mode type:
+    <TTPAR_ProvisioningModes type="Literal">
+        <Value item="1">Auto</Value>
+        <Value item="2">CUCM</Value>
+        <Value item="3">Edge</Value>
+        <Value item="4">Off</Value>
+        <Value item="5">TMS</Value>
+        <Value item="6">VCS</Value>
+        <Value item="7">Webex</Value>
+
+
     """
 
     mode = ""
@@ -171,7 +183,7 @@ def postCodecXML(host,codec_username,codec_password,url,payload,headers):
 def intent(action, webhook):
     """
     This method is called by the local http server whenever an action is sent
-    by the webex teams webhook - and performs appropriate operation on the
+    by the webex teams webhook - and performs appropriate operation (action) on the
     Endpoints
     """
     intent = action
@@ -348,7 +360,7 @@ def intent(action, webhook):
             msg = (time.asctime()
                   +"\t"
                   +hostname
-                  +" address: "
+                  +" Address: "
                   +host
                   +" Location: "
                   +hostLocation
