@@ -42,6 +42,79 @@ ngrok_port = " "
 
 
 # ***  Methods
+def getHelp(webhook):
+    """
+    This method prints out a help screen for the QuickCheck BOT_NAME
+    """
+
+    msg = "\n\n**Welcome to QuickCheck**\n\n" \
+                  "\n" \
+                  "Here are the actions supported by QuickCheck:  \n" \
+                  "  **help** - This help menu  \n" \
+                  "  **list** - print endpoints from endpoints.json list.  \n" \
+                  "  **callStatus** - Shows current call status.  \n" \
+                  "  **getDiags** - List any diagnostic alerts.  \n" \
+                  "  **getVersion** - List current software version.  \n" \
+                  "  **sipStatus** - List SIP registration Status.  \n" \
+                  "  **getLoss** - List Packet Loss values.  \n" \
+                  "  **getLast** - List Last Call Details.  \n" \
+                  "  **getPeople** - List number of people in room.  \n"\
+                  "  **getNumber** - Get Endpoint Numbers.  \n\n"\
+                  "  **Provide IP Address as argument if you want info"\
+                  " on that device only**"
+
+    print (time.asctime(),
+                     "      POSTing msg to Webex Teams      ->  "
+                     +msg
+                     )
+    print (time.asctime(),
+                     "      POSTing to teams space id       ->  "
+                     +webhook['data']['roomId']
+                     )
+    try:
+                sendSparkPOST("https://api.ciscospark.com/v1/messages",
+                             {
+                              "roomId": webhook['data']['roomId'],
+                              "markdown": msg
+                             }
+                             )
+    except:
+                print (time.asctime(),"      Failed sending to Webex   ->  ")
+    return
+
+def getList(webhook):
+    """
+    This method prints out list of endpoints from endpoints.json array
+    """
+    for thisEndpoint in endpoints["endpoint"]:
+        msg = (time.asctime()
+                +"\t"
+                +thisEndpoint["name"]
+                +" Address: "
+                +thisEndpoint["ipv4addr"]
+                +" Location: "
+                +thisEndpoint["location"]
+                +"\n"
+               )
+        print (time.asctime(),
+                "      POSTing msg to Webex Teams      ->  "
+                +msg
+               )
+        print (time.asctime(),
+                "      POSTing to teams space id       ->  "
+                +webhook['data']['roomId']
+               )
+        try:
+            sendSparkPOST("https://api.ciscospark.com/v1/messages",
+                         {
+                          "roomId": webhook['data']['roomId'],
+                          "markdown": msg
+                          }
+                         )
+        except:
+            print (time.asctime(),"      Failed sending to Webex   ->  ")
+    return
+
 def getConfig():
     """
     This method reads the ./config.json file into the params
@@ -54,14 +127,14 @@ def getConfig():
     # read file
     print(" ")
     print("Loading params list from ./config.json file")
-    with open('./config.json', 'r') as myfile:
-        data=myfile.read()
+    try:
+        with open('./config.json', 'r') as myfile:
+            data=myfile.read()
+    except:
+        msg = (time.asctime()+"Cannot read config.json file.\nDid you copy config.txt template to config.json?")
 
     # parse file
     params = loads(data)
-    print(" HERE ARE THE PARAMS :"+dumps(params))
-    print (" HOST NAME : "+params["HOST_NAME"])
-
     HOST_NAME = params["HOST_NAME"]
     PORT_NUMBER = int(params["PORT_NUMBER"])
     BOT_BEARER = params["BOT_BEARER"]
@@ -180,28 +253,24 @@ def postCodecXML(host,codec_username,codec_password,url,payload,headers):
 
     return
 
-def intent(action, webhook):
+def intent(action, arg1, thisEndpoint, webhook):
     """
     This method is called by the local http server whenever an action is sent
     by the webex teams webhook - and performs appropriate operation (action) on the
     Endpoints
     """
     intent = action
+    arg1 = arg1
+    host = thisEndpoint["ipv4addr"]
+    codec_username = thisEndpoint["admin"]
+    codec_password = thisEndpoint["password"]
+    hostname = thisEndpoint["name"]
+    hostLocation = thisEndpoint["location"]
+    mode = thisEndpoint["mode"]
 
-    # Iterate through all the endpoints in the endpoints list
-    for x in endpoints["endpoint"]:
-        host = x["ipv4addr"]
-        codec_username = x["admin"]
-        codec_password = x["password"]
-        hostname = x["name"]
-        hostLocation = x["location"]
+    # Act on intent/Action
 
-        # Find out if endpoint is cloud or onprem registered
-        mode = getMode(host,hostname,codec_username,codec_password)
-
-        # Act on intent/Action
-
-        if intent   == "getpeople":
+    if intent   == "getpeople":
             # If the unit is on-prem registered, use this API call
             if mode == "CUCM":
                 url = 'https://{}/getxml?location=/Status/RoomAnalytics/PeopleCount/Current'.format(host)
@@ -272,8 +341,17 @@ def intent(action, webhook):
                       +" to get people count"
                       )
                     print(msg)
+            else:
+                msg = (time.asctime()
+                      +"    "
+                      +hostname
+                      +" at addr: "
+                      +host
+                      +" has unknown mode "
+                      +mode
+                      )
 
-        elif intent == "callstatus":
+    elif intent == "callstatus":
                 url = 'https://{}/getxml?location=/Status/Call'.format(host)
                 # If the unit is on a call, it will answer to this call
                 try:
@@ -316,7 +394,7 @@ def intent(action, webhook):
                             registered = xml_dict["Status"]["SIP"]["Registration"]["Status"]
                             if registered == "Registered":
                                 msg = (time.asctime()
-                                       +"   "
+                                       +"    "
                                        +hostname
                                        +" is SIP registered but **not currently on a call**."
                                       )
@@ -354,20 +432,18 @@ def intent(action, webhook):
                                    +host
                                    +" to determine Call Status"
                                   )
+                    else:
+                        msg = (time.asctime()
+                               +"    "
+                               +hostname
+                               +" at addr: "
+                               +host
+                               +" has unknown mode "
+                               +mode
+                              )
                 print(msg)
 
-        elif intent == "list":
-            msg = (time.asctime()
-                  +"\t"
-                  +hostname
-                  +" Address: "
-                  +host
-                  +" Location: "
-                  +hostLocation
-                  +"\n"
-                  )
-
-        elif intent == "getdiags":
+    elif intent == "getdiags":
             diags=""
             url = 'https://{}/getxml?location=/Status/Diagnostics'.format(host)
             #reponse holds all the diags, must break out individual diags
@@ -402,7 +478,7 @@ def intent(action, webhook):
                       +host
                       +" to determine Diags.")
 
-        elif intent == "getversion":
+    elif intent == "getversion":
             # If the unit is on-prem registered, use this API call
             if mode == "CUCM":
                 url = 'https://{}/getxml?location=/Status/Provisioning/Software/Current'.format(host)
@@ -466,7 +542,7 @@ def intent(action, webhook):
                   )
                 print(msg)
 
-        elif intent == "sipstatus":
+    elif intent == "sipstatus":
             # If the unit is on-prem registered, use this API call
             if mode == "CUCM":
                 url = 'https://{}/getxml?location=/Status/SIP/Registration'.format(host)
@@ -514,15 +590,25 @@ def intent(action, webhook):
                           )
                 except:
                     msg = (time.asctime()
-                      +" E  Can't reach "
+                           +" E  Can't reach "
+                           +hostname
+                           +" at addr: "
+                           +host
+                           +" to determine Cloud Registration Status"
+                           )
+                    print(msg)
+            else:
+                msg = (time.asctime()
+                      +"    "
                       +hostname
                       +" at addr: "
                       +host
-                      +" to determine Cloud Registration Status"
+                      +" has unknown mode "
+                      +mode
                       )
-                    print(msg)
+            print(msg)
 
-        elif intent == "getloss":
+    elif intent == "getloss":
             url = 'https://{}/getxml?location=/Status/MediaChannels'.format(host)
             video = "No"
             audio = "No"
@@ -625,7 +711,7 @@ def intent(action, webhook):
                   )
             print(msg)
 
-        elif intent == "getlast":
+    elif intent == "getlast":
             """
             getLast gives stats on last call
             """
@@ -668,7 +754,7 @@ def intent(action, webhook):
 
                 print (msg)
 
-        elif intent == "getnumber":
+    elif intent == "getnumber":
             """
             getNumber returns phone numbers of endpoint
             """
@@ -714,20 +800,8 @@ def intent(action, webhook):
                       +" to determine Numbers.")
                 print(msg)
 
-        else:
-            msg = "\n\n**Welcome to QuickCheck**\n\n" \
-                  "\n" \
-                  "Here are the actions supported by QuickCheck:  \n" \
-                  "  **help** - This help menu  \n" \
-                  "  **list** - print endpoints from endpoints.json list.  \n" \
-                  "  **callStatus** - Shows current call status.  \n" \
-                  "  **getDiags** - List any diagnostic alerts.  \n" \
-                  "  **getVersion** - List current software version.  \n" \
-                  "  **sipStatus** - List SIP registration Status.  \n" \
-                  "  **getLoss** - List Packet Loss values.  \n" \
-                  "  **getLast** - List Last Call Details.  \n" \
-                  "  **getPeople** - List number of people in room.  \n"\
-                  "  **getNumber** - Get Endpoint Numbers.  \n"
+    else:
+            msg = (time.asctime()+"    That action isn't supported yet.")
 
             print (time.asctime(),
                      "      POSTing msg to Webex Teams      ->  "
@@ -751,15 +825,15 @@ def intent(action, webhook):
             #return now so we don't run for every endpoint
             return
 
-        # Take MSG generated in one of above intents and send to webex teams
-        try:
+    # Take MSG generated in one of above intents and send to webex teams
+    try:
             sendSparkPOST("https://api.ciscospark.com/v1/messages",
                           {
                            "roomId": webhook['data']['roomId'],
                            "markdown": msg
                           }
                          )
-        except:
+    except:
             print (time.asctime(),"      Failed sending to Webex   ->  ")
 
 def loadEndpoints():
@@ -772,11 +846,28 @@ def loadEndpoints():
     # read file
     print(" ")
     print("Loading endpoints list from ./endpoints.json file")
-    with open('./endpoints.json', 'r') as myfile:
-        data=myfile.read()
+    try:
+        with open('./endpoints.json', 'r') as myfile:
+            data=myfile.read()
+    except:
+        print(time.asctime()
+               +"    "
+               +"Not able to read endpoints.json file,\n"
+               +"Did you use endpoints.txt template and \n"
+               +"create endpoints.json file?"
+             )
+
 
     # parse file
     endpoints = loads(data)
+
+    # Find out where the device is Registered
+    for x in endpoints["endpoint"]:
+        host = x["ipv4addr"]
+        hostname = x["name"]
+        codec_username = x["admin"]
+        codec_password = x["password"]
+        x['mode'] = getMode(host,hostname,codec_username,codec_password)
 
     # show values
     for x in endpoints["endpoint"]:
@@ -785,6 +876,7 @@ def loadEndpoints():
         print ("Location      : "+x["location"])
         print ("IP v4 Address : "+x["ipv4addr"])
         print ("Type          : "+x["type"])
+        print ("Mode          : "+x["mode"])
     return
 
 def checkNgrok():
@@ -919,15 +1011,18 @@ class Server(BaseHTTPRequestHandler):
     def do_POST(self):
         ctype, pdict = cgi.parse_header(self.headers.get('content-type'))
 
-        # refuse to receive non-json content
+        # refuse to receive non-json content as webex teams webhooks come as POST
         if ctype != 'application/json':
             self.send_response(400)
             self.end_headers()
             return
-
-        # read the message and convert it into a python dictionary
+        # The first POST from a webex teams webhook tells you who is sending a
+        #  and what room (space) they are sending the message from.
+        # Here, we convert the first post into a python dictionary
         length = int(self.headers.get('content-length'))
         webhook = loads(self.rfile.read(length))
+        # With the Space ID and Message number we then ask webex teams for the
+        #  actual message or file that was typed.
         result = sendSparkGET('https://api.ciscospark.com/v1/messages/{0}'.format(webhook['data']['id']))
         result = loads(result)
         if "text" in result:
@@ -938,6 +1033,10 @@ class Server(BaseHTTPRequestHandler):
         print (time.asctime(),"      Received from teams space id    <- ",result["roomId"])
 
         msg = None
+        # Webhooks send back a copy of whatever you send them - so you have
+        #   to ignore an incoming message from the bot itself becuase
+        #   that message is the reply from the bot to the original requests
+        #   being repeated back to the bot.
         if webhook['data']['personEmail'] != BOT_EMAIL:
             #If the incoming message is not from BOT_EMAIL, then convert the
             # incoming message to lower case and strip out BOT_NAME
@@ -950,8 +1049,63 @@ class Server(BaseHTTPRequestHandler):
             # first word in message after bot name removed is now the action
             # to be acted on
             x = in_message.split(" ", -1)
-            x = x[0]
-            intent(x, webhook)
+            action = x[0]
+            # if there is a second word in the message, it is the first argument
+            #  if the argument doesn't exist, then this action applies to All
+            #  endpoints
+            try:
+                arg1 = x[1]
+            except:
+                arg1 = "all"
+            # Need to make sure help and list actions don't iterate through
+            #   all the endpoints
+            if ((action == "help") or (action == "list")):
+                arg1 = "one"
+
+            if arg1 == "all":
+                # If arg1 == "all", Iterate through all the endpoints in the
+                #   endpoints list performing the action on each endpoint.
+                for thisEndpoint in endpoints["endpoint"]:
+                    host = thisEndpoint["ipv4addr"]
+                    codec_username = thisEndpoint["admin"]
+                    codec_password = thisEndpoint["password"]
+                    hostname = thisEndpoint["name"]
+                    hostLocation = thisEndpoint["location"]
+                    mode = thisEndpoint["mode"]
+                    # Act on the action
+                    intent(action, arg1, thisEndpoint, webhook)
+            elif arg1 == "one":
+                if action == "help":
+                    getHelp(webhook)
+                elif action == "list":
+                    getList(webhook)
+            # If arg1 exists, then perform action on that endpoint only
+            else:
+                foundit = "false"
+                for thisEndpoint in endpoints["endpoint"]:
+                    if thisEndpoint["ipv4addr"] == arg1:
+                        host = thisEndpoint["ipv4addr"]
+                        codec_username = thisEndpoint["admin"]
+                        codec_password = thisEndpoint["password"]
+                        hostname = thisEndpoint["name"]
+                        hostLocation = thisEndpoint["location"]
+                        mode = thisEndpoint["mode"]
+                        foundit = "true"
+                        # Act on the action
+                        intent(action, arg1, thisEndpoint, webhook)
+
+                if foundit == ("false"):
+                    msg = (time.asctime()+"    that IP Address not found")
+                    print(msg)
+                    try:
+                        sendSparkPOST("https://api.ciscospark.com/v1/messages",
+                                      {
+                                      "roomId": webhook['data']['roomId'],
+                                      "markdown": msg
+                                      }
+                                     )
+                    except:
+                        print (time.asctime(),"      Failed sending to Webex   ->  ")
             return "true"
 
     def handle_http(self, status, content_type):

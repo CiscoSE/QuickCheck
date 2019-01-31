@@ -2,16 +2,18 @@
   { "name":"your endpoint name",
     "location":"your endpoint location",
     "ipv4addr":"your endpoint ip address",
-    "type":"your endpoint type  ie DX80",
+    "type":"placeholder for endpoint type",
+    "mode":"placeholder for registration type"
     "admin":"your endpoint admin name",
     "password":"your endpoint admin password"
   },
   { "name":"your endpoint name",
     "location":"your endpoint location",
     "ipv4addr":"your endpoint ip address",
-    "type":"your endpoint type  ie DX80",
+    "type":"placeholder for endpoint type",
+    "mode":"placeholder for registration type"
     "admin":"your endpoint admin name",
     "password":"your endpoint admin password"
-  }
+  },
  ]
 }
