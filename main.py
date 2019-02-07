@@ -58,8 +58,9 @@ def getHelp(webhook):
                   "  **sipStatus** - List SIP registration Status.  \n" \
                   "  **getLoss** - List Packet Loss values.  \n" \
                   "  **getLast** - List Last Call Details.  \n" \
-                  "  **getPeople** - List number of people in room.  \n"\
-                  "  **getNumber** - Get Endpoint Numbers.  \n\n"\
+                  "  **getPeople** - List number of people in room.  \n" \
+                  "  **getNumber** - Get Endpoint Numbers.  \n" \
+                  "  **dial - !!!NEW!!!** dial (Codec IP) (SIP address to dial) \n\n" \
                   "  **Provide IP Address as argument if you want info"\
                   " on that device only**"
 
@@ -253,7 +254,7 @@ def postCodecXML(host,codec_username,codec_password,url,payload,headers):
 
     return
 
-def intent(action, arg1, thisEndpoint, webhook):
+def intent(action, arg1, arg2, arg3, thisEndpoint, webhook):
     """
     This method is called by the local http server whenever an action is sent
     by the webex teams webhook - and performs appropriate operation (action) on the
@@ -800,6 +801,32 @@ def intent(action, arg1, thisEndpoint, webhook):
                       +" to determine Numbers.")
                 print(msg)
 
+    elif intent == "dial":
+            """
+            dial causes the codec in arg1 to dial the number in arg2
+            """
+
+            url = 'https://{}/putxml'.format(host)
+            payload = ('<Command><Dial command="True"><Number>'+arg2+'</Number><Protocol>SIP</Protocol></Dial></Command>')
+            headers = {'Content-Type': 'text/xml'}
+
+            try:
+                root = postCodecXML(host,codec_username,codec_password,url,payload,headers)
+                infoXML = root.xpath('//Command/DialResult/@status')[0]
+
+                msg = "Outbount Call initiated on Host: {} Call Status: {}\n\t".format(hostname, infoXML)
+
+            except:
+                msg = (time.asctime()
+                       +"    Failed making call from "
+                       +hostname
+                       +" at "
+                       +host
+                       )
+
+            print (msg)
+
+
     else:
             msg = (time.asctime()+"    That action isn't supported yet.")
 
@@ -1057,6 +1084,14 @@ class Server(BaseHTTPRequestHandler):
                 arg1 = x[1]
             except:
                 arg1 = "all"
+            try:
+                arg2 = x[2]
+            except:
+                arg2 = ""
+            try:
+                arg3 = x[3]
+            except:
+                arg3 = ""
             # Need to make sure help and list actions don't iterate through
             #   all the endpoints
             if ((action == "help") or (action == "list")):
@@ -1073,7 +1108,7 @@ class Server(BaseHTTPRequestHandler):
                     hostLocation = thisEndpoint["location"]
                     mode = thisEndpoint["mode"]
                     # Act on the action
-                    intent(action, arg1, thisEndpoint, webhook)
+                    intent(action, arg1, arg2, arg3, thisEndpoint, webhook)
             elif arg1 == "one":
                 if action == "help":
                     getHelp(webhook)
@@ -1092,7 +1127,7 @@ class Server(BaseHTTPRequestHandler):
                         mode = thisEndpoint["mode"]
                         foundit = "true"
                         # Act on the action
-                        intent(action, arg1, thisEndpoint, webhook)
+                        intent(action, arg1, arg2, arg3, thisEndpoint, webhook)
 
                 if foundit == ("false"):
                     msg = (time.asctime()+"    that IP Address not found")
