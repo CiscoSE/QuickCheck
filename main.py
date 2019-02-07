@@ -48,21 +48,25 @@ def getHelp(webhook):
     """
 
     msg = "\n\n**Welcome to QuickCheck**\n\n" \
-                  "\n" \
-                  "Here are the actions supported by QuickCheck:  \n" \
-                  "  **help** - This help menu  \n" \
-                  "  **list** - print endpoints from endpoints.json list.  \n" \
-                  "  **callStatus** - Shows current call status.  \n" \
-                  "  **getDiags** - List any diagnostic alerts.  \n" \
-                  "  **getVersion** - List current software version.  \n" \
-                  "  **sipStatus** - List SIP registration Status.  \n" \
-                  "  **getLoss** - List Packet Loss values.  \n" \
-                  "  **getLast** - List Last Call Details.  \n" \
-                  "  **getPeople** - List number of people in room.  \n" \
-                  "  **getNumber** - Get Endpoint Numbers.  \n" \
-                  "  **dial - !!!NEW!!!** dial (Codec IP) (SIP address to dial) \n\n" \
-                  "  **Provide IP Address as argument if you want info"\
-                  " on that device only**"
+                    "\n" \
+                    "Actions supported by QuickCheck:  \n" \
+                    "  * **help** - This help menu  \n" \
+                    "  * **list** - print endpoints from endpoints.json list.  \n" \
+                    "  * **callStatus** - Shows current call status.  \n" \
+                    "  * **getDiags** - List any diagnostic alerts.  \n" \
+                    "  * **getVersion** - List current software version.  \n" \
+                    "  * **sipStatus** - List SIP registration Status.  \n" \
+                    "  * **getLoss** - List Packet Loss values.  \n" \
+                    "  * **getLast** - List Last Call Details.  \n" \
+                    "  * **getPeople** - List number of people in room.  \n" \
+                    "  * **getNumber** - Get Endpoint Numbers.  \n\n" \
+                    "  **!!! NEW Commands !!!**  \n\n" \
+                    "  * **dial CodecIP SIPAddress** Make codec dial out  \n" \
+                    "  * **dial all SIPAddress** - _codeBlue_ all Codecs dial same number \n" \
+                    "  * **hangup CodecIP** - hangup calls on one codec  \n" \
+                    "  * **hangup all** - hangup all calls on all codecs  \n\n" \
+                    "  * **_Provide IP Address as argument if you want info"\
+                    " on that device only_**"
 
     print (time.asctime(),
                      "      POSTing msg to Webex Teams      ->  "
@@ -735,15 +739,15 @@ def intent(action, arg1, arg2, arg3, thisEndpoint, webhook):
                 CallType = infoXML.text
                 infoXML = root.xpath('//Command/CallHistoryRecentsResult/Entry/LastOccurrenceDuration')[0]
                 Seconds = infoXML.text
-                infoXML = root.xpath('//Command/CallHistoryRecentsResult/Entry/LastOccurrenceRequestedCallType')[0]
-                ReqCallType = infoXML.text
+                infoXML = root.xpath('//Command/CallHistoryRecentsResult/Entry/LastOccurrenceRequestedProtocol')[0]
+                ReqProtocol = infoXML.text
                 infoXML = root.xpath('//Command/CallHistoryRecentsResult/Entry/LastOccurrenceStartTime')[0]
                 StartTime = infoXML.text
                 infoXML = root.xpath('//Command/CallHistoryRecentsResult/Entry/LastOccurrenceEndTime')[0]
                 EndTime = infoXML.text
                 infoXML = root.xpath('//Command/CallHistoryRecentsResult/Entry/LastOccurrenceEndTime')[0]
 
-                msg = "Last Call Hostname: {}\n\tHost: {}\n\tRemote#: {}\n\tRemoteName: {}\n\tDirection: {}\n\tProtocol: {}\n\tCallType: {}\n\tSeconds: {}\n\tRequestedType: {}\n\tStart: {}\n\tEnd: {} ".format(hostname, host ,RemoteNumber,DisplayName,Direction,Protocol,CallType,Seconds,ReqCallType,StartTime,EndTime)
+                msg = "Last Call Hostname: {}\n\tHost: {}\n\tRemote#: {}\n\tRemoteName: {}\n\tDirection: {}\n\tProtocol: {}\n\tCallType: {}\n\tSeconds: {}\n\tRequestedProtocol: {}\n\tStart: {}\n\tEnd: {} ".format(hostname, host ,RemoteNumber,DisplayName,Direction,Protocol,CallType,Seconds,ReqProtocol,StartTime,EndTime)
 
             except:
                 msg = (time.asctime()
@@ -753,7 +757,7 @@ def intent(action, arg1, arg2, arg3, thisEndpoint, webhook):
                        +host
                        )
 
-                print (msg)
+            print (msg)
 
     elif intent == "getnumber":
             """
@@ -804,6 +808,7 @@ def intent(action, arg1, arg2, arg3, thisEndpoint, webhook):
     elif intent == "dial":
             """
             dial causes the codec in arg1 to dial the number in arg2
+            however, if arg1 is "all", then dial arg2 from all codecs
             """
 
             url = 'https://{}/putxml'.format(host)
@@ -826,6 +831,30 @@ def intent(action, arg1, arg2, arg3, thisEndpoint, webhook):
 
             print (msg)
 
+    elif intent == "hangup":
+            """
+            hangup causes the codec in arg1 to hangup existing call
+            """
+
+            url = 'https://{}/putxml'.format(host)
+            payload = ('<Command><Call><Disconnect></Disconnect></Call></Command>')
+            headers = {'Content-Type': 'text/xml'}
+
+            try:
+                root = postCodecXML(host,codec_username,codec_password,url,payload,headers)
+                infoXML = root.xpath('//Command/CallDisconnectResult/@status')[0]
+
+                msg = "Attempting All Calls Disconnect on Host: {} Disconnect Status: {}\n\t".format(hostname, infoXML)
+
+            except:
+                msg = (time.asctime()
+                       +"    Failed making call from "
+                       +hostname
+                       +" at "
+                       +host
+                       )
+
+            print (msg)
 
     else:
             msg = (time.asctime()+"    That action isn't supported yet.")

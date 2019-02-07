@@ -16,19 +16,27 @@ There are many fine tools for managing Cisco Video Endpoints that do so much mor
 
 ## Features
 
-### **Welcome to QuickCheck** ###
+### **Welcome to QuickCheck**
 
-Here are the actions supported by QuickCheck:
--  **help** - This help menu
--  **list** - print endpoints from [endpoints.json](./endpoints.json) file.
--  **callStatus** - Shows **current** call status.
--  **getDiags** - List any diagnostic alerts.
--  **getVersion** - List current software version.
--  **sipStatus** - List SIP registration Status.
--  **getLoss** - List current Packet Loss values.
--  **getLast** - List Last Call Details.
--  **getPeople** - List number of people in room.
--  **getNumber** - Get Endpoint Numbers.
+## Welcome to QuickCheck
+### **Actions supported by QuickCheck:**
+* **help** - This help menu
+* **list** - print endpoints from endpoints.json list.
+* **callStatus** - Shows current call status.
+* **getDiags** - List any diagnostic alerts.
+* **getVersion** - List current software version.
+* **sipStatus** - List SIP registration Status.
+* **getLoss** - List Packet Loss values.
+* **getLast** - List Last Call Details.
+* **getPeople** - List number of people in room.
+* **getNumber** - Get Endpoint Numbers.
+
+  #### !!! NEW Commands !!!
+* **dial CodecIP SIPAddress** Make codec dial out
+* **dial all SIPAddress** - _codeBlue_ all Codecs dial same number
+* **hangup CodecIP** - hangup calls on one codec
+* **hangup all** - hangup all calls on all codecs
+####  Provide IP Address as argument if you want info on that device only
 
 ## Technologies & Frameworks Used
 
